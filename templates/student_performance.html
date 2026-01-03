@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block title %}Student Performance - PlacementHub{% endblock %}
+
+{% block content %}
+<!-- Top Navigation Bar -->
+<div class="top-nav">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Student Performance</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title">Student Performance Analysis</h1>
+    <p class="page-subtitle">Track student progression through company recruitment rounds</p>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(11, 114, 133, 0.1); color: var(--primary-accent);">
+                <i class="bi bi-people"></i>
+            </div>
+            <div class="stat-value">{{ total_students }}</div>
+            <div class="stat-label">Students Analyzed</div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(22, 163, 74, 0.1); color: var(--success);">
+                <i class="bi bi-check-circle"></i>
+            </div>
+            <div class="stat-value">{{ students_with_selections }}</div>
+            <div class="stat-label">Students Selected</div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">
+                <i class="bi bi-file-earmark-text"></i>
+            </div>
+            <div class="stat-value">{{ total_applications }}</div>
+            <div class="stat-label">Total Applications</div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(11, 114, 133, 0.1); color: var(--primary-accent);">
+                <i class="bi bi-graph-up"></i>
+            </div>
+            <div class="stat-value">{{ avg_applications }}</div>
+            <div class="stat-label">Avg Applications/Student</div>
+        </div>
+    </div>
+</div>
+
+<!-- Company Funnel Analysis -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card-custom">
+            <div class="card-header" style="background: var(--surface); padding: 20px; border-bottom: 1px solid var(--border-color);">
+                <h5 class="mb-0" style="font-weight: 600;"><i class="bi bi-funnel me-2"></i>Company Recruitment Funnels</h5>
+                <p class="mb-0 mt-2" style="font-size: 13px; color: var(--text-secondary);">See how student numbers shrink at each recruitment round</p>
+            </div>
+            <div class="card-body p-0">
+                <div class="accordion" id="companyFunnels">
+                    {% for company_id, funnel in company_funnels.items() %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading{{ company_id }}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ company_id }}">
+                                <div class="d-flex justify-content-between align-items-center w-100 me-3">
+                                    <div>
+                                        <strong>{{ funnel.company_name }}</strong> <span class="badge bg-secondary ms-2">{{ company_id }}</span>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="text-muted me-3">{{ funnel.total_applied }} Applied</span>
+                                        <span class="text-success">{{ funnel.total_selected }} Selected</span>
+                                    </div>
+                                </div>
+                            </button>
+                        </h2>
+                        <div id="collapse{{ company_id }}" class="accordion-collapse collapse" data-bs-parent="#companyFunnels">
+                            <div class="accordion-body" style="padding: 24px;">
+                                <!-- Funnel Visualization -->
+                                <div class="mb-4">
+                                    <h6 class="mb-3">Recruitment Funnel</h6>
+                                    <div class="d-flex align-items-end gap-2" style="min-height: 200px;">
+                                        {% for stage in funnel.stages %}
+                                        {% set count = funnel.stage_counts.get(stage, 0) %}
+                                        {% set max_count = funnel.total_applied if funnel.total_applied > 0 else 1 %}
+                                        {% set height = (count / max_count * 100) if max_count > 0 else 0 %}
+                                        <div class="flex-fill d-flex flex-column align-items-center">
+                                            <div class="mb-2" style="font-size: 11px; font-weight: 600; color: var(--text-secondary); text-align: center; min-height: 40px;">
+                                                {{ stage }}
+                                            </div>
+                                            <div class="w-100 position-relative" style="background: var(--background); border-radius: 8px 8px 0 0; min-height: 150px; display: flex; align-items: flex-end;">
+                                                <div class="w-100 text-center" style="background: {% if 'Selected' in stage %}var(--success){% elif loop.index == 1 %}var(--primary-accent){% else %}var(--secondary-accent){% endif %}; height: {{ height }}%; border-radius: 8px 8px 0 0; transition: all 0.3s; position: relative;">
+                                                    <div class="position-absolute top-50 start-50 translate-middle" style="color: white; font-weight: 700; font-size: 14px;">
+                                                        {{ count }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% if not loop.last %}
+                                            <div class="mt-2" style="font-size: 12px; color: var(--text-secondary);">
+                                                {% set next_stage = funnel.stages[loop.index] %}
+                                                {% set next_count = funnel.stage_counts.get(next_stage, 0) %}
+                                                {% set conv_key = stage + ' → ' + next_stage %}
+                                                {% if conv_key in funnel.conversions %}
+                                                {{ funnel.conversions[conv_key].rate }}%
+                                                {% endif %}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                
+                                <!-- Conversion Rates Table -->
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Stage Transition</th>
+                                                <th>From</th>
+                                                <th>To</th>
+                                                <th>Conversion Rate</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for conv_key, conv_data in funnel.conversions.items() %}
+                                            <tr>
+                                                <td><strong>{{ conv_key }}</strong></td>
+                                                <td>{{ conv_data.from }}</td>
+                                                <td>{{ conv_data.to }}</td>
+                                                <td>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <div class="progress" style="width: 100px; height: 8px;">
+                                                            <div class="progress-bar bg-success" role="progressbar" 
+                                                                 style="width: {{ conv_data.rate }}%"
+                                                                 aria-valuenow="{{ conv_data.rate }}" 
+                                                                 aria-valuemin="0" aria-valuemax="100"></div>
+                                                        </div>
+                                                        <span style="font-weight: 600;">{{ conv_data.rate }}%</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Student Performance -->
+<div class="row g-4">
+    <div class="col-12">
+        <div class="card-custom">
+            <div class="card-header" style="background: var(--surface); padding: 20px; border-bottom: 1px solid var(--border-color);">
+                <h5 class="mb-0" style="font-weight: 600;"><i class="bi bi-person-check me-2"></i>Individual Student Performance</h5>
+                <p class="mb-0 mt-2" style="font-size: 13px; color: var(--text-secondary);">Track how far each student progressed in each company</p>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Reg No</th>
+                                <th>Class</th>
+                                <th>Applications</th>
+                                <th>Selected</th>
+                                <th>Avg Stages Reached</th>
+                                <th>Max Stages</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in student_performance %}
+                            <tr>
+                                <td><strong>{{ student.name }}</strong></td>
+                                <td>{{ student.reg_no }}</td>
+                                <td><span class="badge bg-info">{{ student.class }}</span></td>
+                                <td>{{ student.total_applications }}</td>
+                                <td>
+                                    {% if student.total_selected > 0 %}
+                                        <span class="badge bg-success">{{ student.total_selected }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">0</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ student.avg_stages_reached }}</td>
+                                <td>{{ student.max_stages_reached }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#student{{ loop.index }}">
+                                        <i class="bi bi-chevron-down"></i> View
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="8" class="p-0">
+                                    <div class="collapse" id="student{{ loop.index }}">
+                                        <div class="p-3" style="background: var(--background);">
+                                            <h6 class="mb-3">Company Applications for {{ student.name }}</h6>
+                                            <div class="row g-3">
+                                                {% for company in student.companies %}
+                                                <div class="col-md-6">
+                                                    <div class="card" style="border: 1px solid var(--border-color);">
+                                                        <div class="card-body p-3">
+                                                            <h6 class="card-title mb-2">
+                                                                {{ company.company_name }}
+                                                                <span class="badge bg-secondary ms-2">{{ company.company_id }}</span>
+                                                            </h6>
+                                                            <p class="mb-2" style="font-size: 13px;">
+                                                                <strong>Status:</strong> 
+                                                                {% if company.status == 'Selected' %}
+                                                                    <span class="badge bg-success">{{ company.status }}</span>
+                                                                {% elif 'Reached' in company.status %}
+                                                                    <span class="badge bg-warning">{{ company.status }}</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">{{ company.status }}</span>
+                                                                {% endif %}
+                                                            </p>
+                                                            <div class="mb-2" style="font-size: 12px;">
+                                                                <strong>Progress:</strong> {{ company.stages_passed }}/{{ company.total_stages }} stages
+                                                            </div>
+                                                            <div class="progress mb-2" style="height: 8px;">
+                                                                <div class="progress-bar" role="progressbar" 
+                                                                     style="width: {{ (company.stages_passed / company.total_stages * 100) if company.total_stages > 0 else 0 }}%"
+                                                                     aria-valuenow="{{ company.stages_passed }}" 
+                                                                     aria-valuemin="0" aria-valuemax="{{ company.total_stages }}"></div>
+                                                            </div>
+                                                            <div style="font-size: 11px; color: var(--text-secondary);">
+                                                                {% for prog in company.progression %}
+                                                                    {% if prog.passed %}
+                                                                        <span class="badge bg-success me-1">{{ prog.stage }}</span>
+                                                                    {% endif %}
+                                                                {% endfor %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-expand accordion items on page load if needed
+    // You can add custom interactions here
+</script>
+{% endblock %}
+

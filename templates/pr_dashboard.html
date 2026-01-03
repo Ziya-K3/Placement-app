@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}PR Dashboard - Placement Management{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">PR Performance Dashboard</h1>
+    <p class="text-muted">Performance metrics for all placement representatives</p>
+</div>
+
+<!-- PR Stats Cards -->
+<div class="row mb-4">
+    {% for pr_name, details in pr_details.items() %}
+    <div class="col-md-4 mb-3">
+        <div class="card stat-card h-100">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h6 class="text-muted mb-1">{{ details.code }}</h6>
+                    <h5 class="mb-0"><strong>{{ pr_name }}</strong></h5>
+                </div>
+                <div class="stat-icon" style="background: rgba(74, 144, 226, 0.1); color: #4A90E2;">
+                    <i class="bi bi-person-badge"></i>
+                </div>
+            </div>
+            <div class="row text-center mt-3">
+                <div class="col-4">
+                    <h4 class="text-primary mb-0">{{ details.drives }}</h4>
+                    <small class="text-muted">Drives</small>
+                </div>
+                <div class="col-4">
+                    <h4 class="text-success mb-0">{{ details.students }}</h4>
+                    <small class="text-muted">Placed</small>
+                </div>
+                <div class="col-4">
+                    <h4 class="text-info mb-0">{{ details.avg_package }}</h4>
+                    <small class="text-muted">Avg LPA</small>
+                </div>
+            </div>
+            <div class="row text-center mt-3">
+                <div class="col-4">
+                    <h6 class="text-primary mb-0">{{ details.companies_count }}</h6>
+                    <small class="text-muted">Companies</small>
+                </div>
+                <div class="col-4">
+                    <span class="badge bg-success-subtle text-success fw-semibold px-3 py-2">
+                        {{ details.status_counts['Completed'] if details.status_counts and 'Completed' in details.status_counts else 0 }}
+                    </span>
+                    <small class="text-muted d-block mt-1">Completed</small>
+                </div>
+                <div class="col-4">
+                    <span class="badge bg-warning-subtle text-dark fw-semibold px-3 py-2">
+                        {{ details.status_counts['On-going'] if details.status_counts and 'On-going' in details.status_counts else 0 }}
+                    </span>
+                    <small class="text-muted d-block mt-1">On-going</small>
+                </div>
+            </div>
+            <div class="row text-center mt-2">
+                <div class="col-6">
+                    <span class="badge bg-danger-subtle text-danger fw-semibold px-3 py-2">
+                        {{ details.status_counts['Cancelled'] if details.status_counts and 'Cancelled' in details.status_counts else 0 }}
+                    </span>
+                    <small class="text-muted d-block mt-1">Cancelled</small>
+                </div>
+                <div class="col-6">
+                    <span class="badge bg-secondary-subtle text-secondary fw-semibold px-3 py-2">
+                        {{ details.status_counts['On-Hold'] if details.status_counts and 'On-Hold' in details.status_counts else 0 }}
+                    </span>
+                    <small class="text-muted d-block mt-1">On-Hold</small>
+                </div>
+            </div>
+            <hr>
+            <button class="btn btn-sm btn-outline-primary" onclick="showCompanies('{{ pr_name }}')">
+                View Companies ({{ details.companies_count }}) <i class="bi bi-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Comparison Chart -->
+<div class="card table-custom mb-4">
+    <div class="card-body">
+        <h5 class="mb-4">PR Comparison - Drives vs Students Placed</h5>
+        <div id="prComparisonChart"></div>
+    </div>
+</div>
+
+<!-- Companies Modal -->
+<div class="modal fade" id="companiesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Companies</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Companies will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    var prDetails = {{ pr_details | tojson }};
+    
+    // Prepare data for comparison chart
+    var prNames = Object.keys(prDetails);
+    var drives = prNames.map(name => prDetails[name].drives);
+    var students = prNames.map(name => prDetails[name].students);
+    
+    var trace1 = {
+        x: prNames,
+        y: drives,
+        name: 'Drives Handled',
+        type: 'bar',
+        marker: { color: '#4A90E2' }
+    };
+    
+    var trace2 = {
+        x: prNames,
+        y: students,
+        name: 'Students Placed',
+        type: 'bar',
+        marker: { color: '#50C878' }
+    };
+    
+    var layout = {
+        barmode: 'group',
+        height: 400,
+        margin: { t: 20, b: 100, l: 50, r: 20 },
+        xaxis: { tickangle: -45 },
+        yaxis: { title: 'Count' },
+        legend: { orientation: 'h', y: 1.1 }
+    };
+    
+    Plotly.newPlot('prComparisonChart', [trace1, trace2], layout, {responsive: true});
+    
+    // Show companies for a PR
+    function showCompanies(prName) {
+        var details = prDetails[prName];
+        var modalTitle = document.getElementById('modalTitle');
+        var modalBody = document.getElementById('modalBody');
+        
+        modalTitle.textContent = prName + ' - Companies';
+        
+        var counts = details.status_counts || {};
+        var statusOrder = ['Completed', 'On-going', 'Cancelled', 'On-Hold', 'Unknown'];
+        var statusClasses = {
+            'Completed': 'bg-success',
+            'On-going': 'bg-warning text-dark',
+            'Cancelled': 'bg-danger',
+            'On-Hold': 'bg-secondary',
+            'Unknown': 'bg-dark'
+        };
+        
+        var summaryHtml = '<div class="d-flex flex-wrap gap-2 mb-3">';
+        statusOrder.forEach(status => {
+            var count = counts[status] || 0;
+            summaryHtml += `
+                <span class="badge ${statusClasses[status]} rounded-pill px-3 py-2">
+                    ${status}: <strong>${count}</strong>
+                </span>
+            `;
+        });
+        summaryHtml += '</div>';
+        
+        var html = summaryHtml;
+        if (details.companies.length === 0) {
+            html += '<p class="text-muted">No companies assigned yet.</p>';
+        } else {
+            html += '<ul class="list-group">';
+            details.companies.forEach(company => {
+                var status = company.status || 'Unknown';
+                var badgeClass = statusClasses[status] || 'bg-dark';
+                html += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${company.name || 'N/A'}</strong>
+                            ${company.company_id ? `<div class="text-muted small">ID: ${company.company_id}</div>` : ''}
+                        </div>
+                        <span class="badge ${badgeClass}">${status}</span>
+                    </li>
+                `;
+            });
+            html += '</ul>';
+        }
+        
+        modalBody.innerHTML = html;
+        
+        var modal = new bootstrap.Modal(document.getElementById('companiesModal'));
+        modal.show();
+    }
+</script>
+{% endblock %}

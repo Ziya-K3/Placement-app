@@ -1,0 +1,102 @@
+record_id,company_id,company_name,campus_type,pr_assigned,pr_name,placement_origin,status,noof_students_placed,role,package,student_names,class_distribution
+1,CMP01,Adobe,On Campus,,-,Department,Completed,1.0,Associate Technial Consultant,12 LPA,SIYONA SNOTRA,MCA A
+2,CMP02,Standard Chartered,Off Campus,,,Off Campus,Completed,1.0,Bussiness Analyst,12 LPA,KURRA ABHIMANYU YADAV,MSc AIML
+3,CMP03,Syncron,On Campus,PR03,KEZYA STEFFYN S,Department,Completed,2.0,QUALITY ENGINEER INTERN,11.5 LPA,"SNEHA M, TRINY CHRISTOPHER",MCA A
+5,CMP03,Syncron,On Campus,,,Department,Completed,1.0,MACHINE LEARNING INTERN ,11.5 LPA,DHANUSH ADITHIYA K B,MSc AIML
+5,CMP03,Syncron,On Campus,,,Department,Completed,2.0,TECHNICAL SUPPORT ENGINEER INTERN,11.5 LPA,"DEBIN ROBERT, AJIN GEORGE BINU",MSc AIML
+6,CMP04,CISO Genie,On Campus,PR02,"JAIBY MARIYA JOSEPH, SULEKHA K R",Department,Completed,1.0,LLM RESEARCH INTERN,8 LPA,MEHAKK LUNKAR,MSc AIML
+7,CMP04,CISO Genie,On Campus,,,Department,Completed,2.0,PYTHON BACKEND DEVELOPER,8 LPA,PRASHANTH SINGH,MCA B
+8,CMP04,CISO Genie,On Campus,,,Department,Completed,,PYTHON BACKEND DEVELOPER,8 LPA,ANMOL RATAN,MCA B
+9,CMP04,CISO Genie,On Campus,,,Department,Completed,1.0,AI+ PYTHON INTERN,8 LPA,SOUJANYA M BHAT,MSc AIML
+10,CMP04,CISO Genie,On Campus,,,Department,Completed,2.0,REACT FRONTEND DEVELOPER INTERN,8 LPA,TUSHAR GHOSH,MCA B
+11,CMP04,CISO Genie,Off Campus,,-,Off Campus,Completed,,PYTHON BACKEND DEVELOPER,8 LPA,KISHAN KUMAR,MCA B
+12,CMP05,NeoStats,On Campus,PR08,NITISH CHURIWALA,CPCG,Completed,3.0,DATA ENGINEER INTERN,7 LPA,ANJALI KRISHNA,MCA B
+13,CMP05,NeoStats,On Campus,,,CPCG,Completed,,DATA ENGINEER INTERN,7 LPA,R SHARANYA,MCA B
+14,CMP05,NeoStats,On Campus,,,CPCG,Completed,,DATA ENGINEER INTERN,7 LPA,S B ANUSHA,MCA A
+15,CMP05,NeoStats,On Campus,,,CPCG,Completed,1.0,DATA ANALYST INTERN,7 LPA,SAAKSHI JAISWAL,MSc AIML
+16,CMP05,NeoStats,Off Campus,,,Off Campus,Completed,1.0,DATA ENGINEER INTERN,7 LPA,VISMAYA V,MCA A
+17,CMP06,India Shelter,On Campus,PR05,ANSON THOMAS,CPCG,Completed,2.0,DATA SCIENTIST INTERN,7 LPA,JESVIN K JUSTIN,MSc AIML
+18,CMP06,India Shelter,On Campus,,,CPCG,Completed,,DATA SCIENTIST INTERN,7 LPA,SIDDHANT DEORA,MCA B
+19,CMP07,MyOperator,On Campus,PR01,"SULEKHA K R, PARICHOY NANDI",CPCG,Completed,2.0,PYTHON ENGINEER INTERN,5 - 8 LPA,MULCHANDANI ISHA NIRAJ,MCA B
+20,CMP07,MyOperator,On Campus,,,CPCG,Completed,,AI ENGINEER INTERN,5.5 LPA,MARIA JAMES,MSc AIML
+21,CMP07,MyOperator,On Campus,,,CPCG,Completed,1.0,AI ENGINEER INTERN,5.5 LPA,SULEKHA K R,MSc AIML
+22,CMP08,Fractal,On Campus,PR05,ANSON THOMAS,CPCG,Completed,2.0,IMAGINEER,7 LPA,SAGAR SHARMA,MCA B
+23,CMP08,Fractal,On Campus,,,CPCG,Completed,,IMAGINEER,7 LPA,SUMITH MEENA S,MCA B
+24,CMP09,Oculotix,Off Campus,,-,Off Campus,Completed,1.0,LEAD CONSULTING AI ENGINEER,7 LPA,KEZYA STEFFYN S,MSc AIML
+25,CMP10,Noval Office,Off Campus,,-,Off Campus,Completed,1.0,AI ENGINEER INTERN,30000 pm,VARUN CHANNAMALLIKARJUN ARABALLI,MSc AIML
+26,CMP11,Equifax,On Campus,PR01,PARICHOY NANDI,CPCG,On-going,,DATA SCIENTIST INTERN,9 LPA,,
+27,CMP12,Living Thoughts,On Campus,PR08,NITISH CHURIWALA,Department,Cancelled,,AI / ML / Robotics Intern,10000 pm,,
+28,CMP13,Rippling,On Campus,PR11,KUSUMA H K,CPCG,On-going,,CUSTOMER SUPPORT SPECIALIST,15 LPA,,
+29,CMP14,Consuma AI,On Campus,PR12,MARIA BOBY,CPCG,Completed,0.0,RESEARCH ANALYST ,12 LPA,,
+30,CMP15,Trivium,On Campus,PR09,VIDYA SHREE B V,Department,Completed,5.0,SOFTWARE DEVELOPER/ QA ENGINEER ,5.5 LPA,ANINA ABRAHAM,MCA A
+31,CMP15,Trivium,On Campus,,,Department,Completed,,SOFTWARE DEVELOPER/ QA ENGINEER ,5.5 LPA,PARICHOY NANDI,MCA A
+32,CMP15,Trivium,On Campus,,,Department,Completed,,SOFTWARE DEVELOPER/ QA ENGINEER ,5.5 LPA,VIVEK S,MCA A
+33,CMP15,Trivium,On Campus,,,Department,Completed,,SOFTWARE DEVELOPER/ QA ENGINEER ,5.5 LPA,ASHISH ASHOK KHETAL,MCA B
+34,CMP15,Trivium,On Campus,,,Department,Completed,,SOFTWARE DEVELOPER/ QA ENGINEER ,5.5 LPA,JAIBY MARIYA JOSEPH,MCA B
+35,CMP16,Accenture IT,On Campus,PR01,PARICHOY NANDI,CPCG,On-going,,Software Developer,NOT DISCLOSED,,
+36,CMP17,Sunbird,On Campus,PR06,"JAIBY MARIYA JOSEPH, SULEKHA K R",Department,On-Hold,,JUNIOR DEVELOPER INTERN,7 LPA,,
+37,CMP18,Facctum,On Campus,,SAMDENNIS M,CPCG,On-going,,"AI/ML Intern
+Quality Assurance Intern
+Data Engineering Intern",NOT DISCLOSED,,
+38,CMP19,PwC,On Campus,PR07,SAMDENNIS M,CPCG,On-going,,ACTURIAL CONSULTING,NOT DISCLOSED,,
+39,CMP20,Accenture Operation,On Campus,PR01,PARICHOY NANDI,CPCG,On-going,,MARKETING ANALYST -DS,9 LPA,,
+40,CMP21,Quintype Technologies,On Campus,PR06,"JAIBY MARIYA JOSEPH, SULEKHA K R",CPCG,On-going,,SOFTWARE DEVELOPER,6 LPA,,
+41,CMP22,Great Learning,On Campus,PR07,JESVIN K JUSTIN,Department,On-going,,SOFTWARE DEVELOPMENT ENGINEER,NOT DISCLOSED,,
+42,CMP22,Great Learning,On Campus,,,Department,On-going,,UX DESIGNER,NOT DISCLOSED,,
+43,CMP23,Nasdaq,On Campus,PR03,KEZYA STEFFYN S,CPCG,On-going,,"SDE, QA, etc.",50000 pm,,
+44,CMP24,Akasha Air,On Campus,PR02,SULEKHA K R,Department,On-going,3.0,DATA ENGINEERING INTERN,30000 pm,"ADITYA GUJAR, ANJANEY MITRA, PRATHAM JAIN","MSc AIML, MCA B, MSc AIML"
+45,CMP25,INube Solution,On Campus,PR09,VIDYA SHREE B V,CPCG,On-going,,Bussiness Analytics,8 LPA,,
+46,CMP26,Sysfore Technologies,On Campus,PR08,NITISH CHURIWALA,Department,Completed,7.0,Associate Software Engineer,4.5 LPA,ATHIRA C M,MCA A
+47,CMP26,Sysfore Technologies,On Campus,,,Department,Completed,,Associate Software Engineer,4.5 LPA,SAMUEL ALEX KOSHY,MCA A
+48,CMP26,Sysfore Technologies,On Campus,,,Department,Completed,,Associate Software Engineer,4.5 LPA,SHANTANU DAS,MCA A
+49,CMP26,Sysfore Technologies,On Campus,,,Department,Completed,,Associate Software Engineer,4.5 LPA,SHIVANGI AGARWAL,MCA B
+50,CMP26,Sysfore Technologies,On Campus,,,Department,Completed,,Associate Software Engineer,4.5 LPA,SHREY JAIN,MCA B
+51,CMP26,Sysfore Technologies,On Campus,,,Department,Completed,,Associate Software Engineer,4.5 LPA,CHRISMA SERRAO,MSc AIML
+52,CMP26,Sysfore Technologies,On Campus,,,Department,Completed,,Associate Software Engineer,4.5 LPA,ROBIN RAJESH,MSc AIML
+53,CMP27,Factum ,On Campus,PR04,SAMDENNIS M,CPCG,Completed,1.0,Quality Analyst,NOT DISCLOSED,,
+54,CMP28,Karboncard,On Campus,PR05,ANSON THOMAS,Department,On-going,,AI Engineer Intern,NOT DISCLOSED,,
+55,CMP29,bounteous x Accolite,On Campus,PR01,PARICHOY NANDI,Department,On-going,,Software Engineer,NOT DISCLOSED,,
+56,CMP30,FICO,On Campus,PR03,KEZYA STEFFYN S,CPCG,Completed,,Education Intern,9 LPA,,
+57,CMP31,BRANDCOM PR,On Campus,PR07,JESVIN K JUSTIN,CPCG,On-going,,Public Relation Executive,NOT DISCLOSED,,
+58,CMP31,BRANDCOM PR,On Campus,,,CPCG,On-going,,Digital Marketing,NOT DISCLOSED,,
+59,CMP32,Facctum,On Campus,PR04,SAMDENNIS M,CPCG,Completed,1.0,Quality Analyst,8 LPA,SHREEGANESH KESHRIMAL PUROHIT,MCA A
+60,CMP33,Lead Walnut,On Campus,PR07,JESVIN K JUSTIN,CPCG,Completed,4.0,React intern,8 LPA,SAUMYA DWIVEDI,MCA A
+60,CMP33,Lead Walnut,On Campus,PR07,JESVIN K JUSTIN,CPCG,Completed,4.0,React intern,8 LPA,VAIBHAV TOMAR,MCA A
+60,CMP33,Lead Walnut,On Campus,PR07,JESVIN K JUSTIN,CPCG,Completed,4.0,React intern,8 LPA,VIDYA SHREE B V,MCA B
+60,CMP33,Lead Walnut,On Campus,PR07,JESVIN K JUSTIN,CPCG,Completed,4.0,AI ML intern,8 LPA,ALEX KHUNDONGBAM,MSc AIML
+61,CMP28,Karboncard,On Campus,PR05,ANSON THOMAS,Department,Completed,1.0,AI engineer Intern,Not Disclosed,DESHMUKH PRATIK BHUSHANRAO,MSc AIML
+62,CMP29,bounteous x Accolite,On Campus,PR07,JESVIN K JUSTIN,Department,On-going,0.0,Software Engineer,,,
+63,CMP30,FICO,On Campus,PR03,KEZYA STEFFYN S,CPCG,On-going,0.0,Education Intern,9 LPA,,
+64,CMP31,BRANDCOM PR,On Campus,PR07,JESVIN K JUSTIN,CPCG,On-going,0.0,Public Relation Executive,,,
+65,CMP31,BRANDCOM PR,On Campus,PR07,JESVIN K JUSTIN,CPCG,On-going,0.0,Digital marketing,,,
+66,CMP34,Meltwater,On Campus,PR01,PARICHOY NANDI,Department,Completed,3.0,Product Support,7 LPA,"MALAVIKA MANOJ, ROHAN GAUTAM, LANDA SRINIJA","MCA B, MCA B, MSc AIML"
+67,CMP35,Acies Global,On Campus,PR04,SAMDENNIS M,Department,Completed,1.0,Associate Trainee,6 LPA,ANSON THOMAS,MCA A
+68,CMP36,CS Labs,On Campus,PR12,MARIA BOBY,Department,Completed,4.0,Software Developer,25000 pm,"ALWIN JAISON, JITHU VARGHESE JACOB, ANIRBAN BANERJEE, KURUVILLA GEORGE","MCA A, MCA A, MCA B, MCA B"
+69,CMP13,Rippling,On Campus,,,CPCG,Completed,0.0,,,,
+70,CMP24,Akasha Air,On Campus,PR02,SULEKHA K R,Department,Completed,2.0,FULL STACK DEVELOPER INTERN,30000 pm,"AKHIL KUMAR GOPE, CHUNAWALA MOHSIN MOHAMMED","MCA A, MCA B"
+71,CMP37,Talview,On Campus,PR07,JESVIN K JUSTIN,CPCG,On-going,0.0,Software Developer,7.5 LPA,,
+72,CMP38,White Gold,On Campus,PR07,JESVIN K JUSTIN,Department,On-Hold,0.0,FULL STACK DEVELOPER INTERN,15 LPA,,
+73,CMP39,Inkle,On Campus,PR05,ANSON THOMAS,Department,Cancelled,0.0,,35000 pm,,
+74,CMP40,Sit or Start AI,On Campus,PR05,ANSON THOMAS,Department,Cancelled,0.0,,7 LPA,,
+75,CMP41,Cybercube,On Campus,PR12,MARIA BOBY,CPCG,Completed,0.0,Associate Consultant- Process Consulting-,5.5 LPA,,
+76,CMP42,Nimblix Technologies,On Campus,PR09,VIDYA SHREE B V,Department,Cancelled,0.0,,,,
+77,CMP43,SuperAGI,On Campus,PR07,JESVIN K JUSTIN,CPCG,On-going,0.0,Software Developer,6 LPA,,
+78,CMP44,Auronova,On Campus,PR05,ANSON THOMAS,CPCG,Completed,0.0,Risk management related,10 LPA,,
+79,CMP45,Logixal,On Campus,PR01,PARICHOY NANDI,CPCG,On-going,0.0,Trainee engineer,5 LPA,,
+80,CMP46,Idea Elan,On Campus,PR09,VIDYA SHREE B V,Department,On-going,0.0,AI ML Developer intern,5 LPA,,
+81,CMP47,CRED,On Campus,PR12,MARIA BOBY,Department,Completed,0.0,Operation analyst,50000 pm,,
+82,CMP48,Aakash Institute,On Campus,PR03,KEZYA STEFFYN S,CPCG,On-going,0.0,assistant lecturer,8 LPA,,
+83,CMP49,Connect and Heal,On Campus,PR07,JESVIN K JUSTIN,CPCG,On-going,0.0,DATA ENGINEERING INTERN,,,
+84,CMP50,Mano AI,On Campus,PR02,SULEKHA K R,CPCG,On-going,0.0,Growth Marketing – Management Trainee,8 LPA,,
+85,CMP51,Wisdom Wood high,On Campus,PR11,KUSUMA H K,CPCG,On-going,0.0,Teaching roles,3.8 LPA,,
+86,CMP52,Squirrel Group,On Campus,PR03,KEZYA STEFFYN S,CPCG,On-going,0.0,,12 LPA,,
+87,CMP53,Target,On Campus,PR03,KEZYA STEFFYN S,CPCG,On-going,0.0,Appreticeship ,225000 pm,,
+88,CMP54,Tata power,On Campus,PR05,ANSON THOMAS,CPCG,On-going,0.0,,,,
+89,CMP55,Ipsos,On Campus,PR09,VIDYA SHREE B V,Department,On-going,0.0,Entry level position in the Delivery Career Hierarchy,30000 pm,,
+90,CMP56,Think Exam Ginger,On Campus,PR09,VIDYA SHREE B V,CPCG,On-going,0.0,,Software Trainee,,
+91,CMP57,Base educationla services,On Campus,PR06,JAIBY MARIYA JOSEPH,CPCG,On-going,0.0,"Junior Faculty –  Physics, Chemistry, Mathematics & Biology",4.3 LPA,,
+92,CMP58,Entertainment Technologies,On Campus,PR08,NITISH CHURIWALA,CPCG,On-going,0.0,Content Operations & Localization,3.2 LPA,,
+93,CMP59,Kevnit Digital Solutions,On Campus,PR04,SAMDENNIS M,Department,On-going,0.0,Techno-Commercial Intern,15000 pm,,
+94,CMP60,Travstack,Off Campus,,,Off Campus,Completed,1.0,Product and AI research Intern,10000 pm,JESSICA SARAH MATHEW,MSc AIML
+95,CMP61,Zeno Talent,Off Campus,,,Off Campus,Completed,1.0,Data Analyst,15000 pm,ADITI KARAJAGI,MSc AIML
+96,CMP16,,On Campus,PR01,PARICHOY NANDI,CPCG,On-going,7,ASSOCIATE SOFTWARE ENGINEER,,"CHLOY COSTA, AMAL JYOTHI S, JOEL ABHISHEK, SANCTIS DANIEL GILBERT, DHWANI DHINGRA, ROHAN CHERIAN JACOB, RAKSHIT SRIVASTAVA","MCA A, MCA B, MCA B, MSc AIML, MSc AIML, MCA B, MCA A"

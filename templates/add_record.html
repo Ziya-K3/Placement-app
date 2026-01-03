@@ -1,0 +1,501 @@
+{% extends "base.html" %}
+
+{% block title %}Add Record - Placement Management{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Add New Placement Record</h1>
+    <p class="text-muted">Fill in the details to add a new company placement record</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card table-custom">
+            <div class="card-body p-4">
+                <form method="POST">
+                    {% if prefill and prefill.company_id %}
+                    <input type="hidden" name="company_id" value="{{ prefill.company_id }}">
+                    {% endif %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Company Name *</label>
+                            
+                            <!-- Toggle option for ongoing status -->
+                            <div id="ongoingToggleContainer" style="display: none;" class="mb-2">
+                                <div class="btn-group" role="group" style="width: 100%;">
+                                    <input type="radio" class="btn-check" name="company_source" id="selectExisting" value="existing" checked>
+                                    <label class="btn btn-outline-primary" for="selectExisting">
+                                        <i class="bi bi-list-ul"></i> Select Existing
+                                    </label>
+                                    
+                                    <input type="radio" class="btn-check" name="company_source" id="addNew" value="new">
+                                    <label class="btn btn-outline-primary" for="addNew">
+                                        <i class="bi bi-plus-circle"></i> Add New
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- Text input for new company or non-ongoing status -->
+                            <input type="text" 
+                                   class="form-control" 
+                                   name="company_name" 
+                                   id="companyNameInput"
+                                   value="{{ prefill.company_name if prefill else '' }}" 
+                                   required>
+                            
+                            <!-- Dropdown for ongoing companies (hidden by default) -->
+                            <select class="form-select" 
+                                    name="company_name" 
+                                    id="companyNameSelect"
+                                    style="display: none;"
+                                    required>
+                                <option value="">Select Ongoing Company</option>
+                                {% for company in ongoing_companies %}
+                                <option value="{{ company.name }}" 
+                                        data-company-id="{{ company.id }}"
+                                        data-campus-type="{{ company.campus_type }}"
+                                        data-placement-origin="{{ company.placement_origin }}"
+                                        data-pr-assigned="{{ company.pr_assigned }}"
+                                        {% if prefill and prefill.company_name == company.name %}selected{% endif %}>
+                                    {{ company.name }} ({{ company.id }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            
+                            <!-- Message when no ongoing companies available -->
+                            <small class="text-muted" id="noOngoingMessage" style="display: none;">
+                                <i class="bi bi-info-circle"></i> No ongoing companies available. You can enter a new company name.
+                            </small>
+                            
+                            <!-- Hidden field to store company_id when selected from dropdown -->
+                            <input type="hidden" name="company_id" id="companyIdHidden" value="{{ prefill.company_id if prefill else '' }}">
+                            {% if prefill and prefill.company_id %}
+                            <small class="text-muted" id="companyIdDisplay">Company ID: {{ prefill.company_id }}</small>
+                            {% else %}
+                            <small class="text-muted" id="companyIdDisplay" style="display: none;"></small>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Campus Type *</label>
+                            <select class="form-select" name="campus_type" required>
+                                <option value="">Select Type</option>
+                                <option value="On Campus">On Campus</option>
+                                <option value="Off Campus">Off Campus</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">PR Assigned</label>
+                            <select class="form-select" name="pr_assigned">
+                                <option value="">Select PR</option>
+                                {% for code, name in pr_mapping.items() %}
+                                <option value="{{ code }}">{{ code }} - {{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Placement Origin *</label>
+                            <select class="form-select" name="placement_origin" required>
+                                <option value="">Select Origin</option>
+                                <option value="CPCG">CPCG</option>
+                                <option value="Department">Department</option>
+                                <option value="Off Campus">Off Campus</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Status *</label>
+                            <select class="form-select" name="status" required>
+                                <option value="">Select Status</option>
+                                <option value="Completed" {% if prefill and prefill.status == 'Completed' %}selected{% endif %}>Completed</option>
+                                <option value="On-going" {% if prefill and prefill.status == 'On-going' %}selected{% elif prefill and prefill.status == '' %}selected{% endif %}>On-going</option>
+                                <option value="On-Hold" {% if prefill and prefill.status == 'On-Hold' %}selected{% endif %}>On-Hold</option>
+                                <option value="Cancelled" {% if prefill and prefill.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Number of Students Placed</label>
+                            <input type="number" class="form-control" name="noof_students_placed" id="numStudents" min="0" value="0">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Role</label>
+                        <input type="text" class="form-control" name="role" placeholder="e.g., Software Developer">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Package</label>
+                        <input type="text" class="form-control" name="package" placeholder="e.g., 12 LPA or 30000 pm">
+                    </div>
+                    
+                    <div class="mb-3" id="studentSearchContainer" style="display: none;">
+                        <label class="form-label">Student Names</label>
+                        <div id="studentSearchBoxes"></div>
+                        <small class="text-muted">Type to search for students by name. Class will be auto-detected.</small>
+                    </div>
+                    
+                    <!-- Hidden field to store comma-separated student names -->
+                    <input type="hidden" name="student_names" id="studentNamesHidden">
+                    
+                    <div class="mb-4" id="classPreview" style="display: none;">
+                        <label class="form-label">Detected Classes</label>
+                        <div id="classDisplay" class="alert alert-info"></div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Add Record
+                        </button>
+                        <a href="{{ url_for('companies') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let selectedStudents = [];
+    let searchTimeout = null;
+    
+    // Toggle between text input and dropdown based on status selection
+    const statusSelect = document.querySelector('select[name="status"]');
+    const companyNameInput = document.getElementById('companyNameInput');
+    const companyNameSelect = document.getElementById('companyNameSelect');
+    const companyIdHidden = document.getElementById('companyIdHidden');
+    const companyIdDisplay = document.getElementById('companyIdDisplay');
+    const ongoingToggleContainer = document.getElementById('ongoingToggleContainer');
+    const selectExistingRadio = document.getElementById('selectExisting');
+    const addNewRadio = document.getElementById('addNew');
+    
+    // Store ongoing companies count from backend
+    const ongoingCompaniesCount = {{ ongoing_companies|length }};
+    
+    // Function to toggle company name field
+    function toggleCompanyNameField() {
+        const selectedStatus = statusSelect.value.toLowerCase();
+        const isOngoing = selectedStatus === 'on-going' || selectedStatus === 'ongoing' || selectedStatus === 'on going';
+        const noOngoingMessage = document.getElementById('noOngoingMessage');
+        
+        if (isOngoing && ongoingCompaniesCount > 0) {
+            // Show toggle buttons and dropdown by default
+            ongoingToggleContainer.style.display = 'block';
+            selectExistingRadio.checked = true;
+            companyNameInput.style.display = 'none';
+            companyNameInput.removeAttribute('required');
+            companyNameSelect.style.display = 'block';
+            companyNameSelect.setAttribute('required', 'required');
+            if (noOngoingMessage) noOngoingMessage.style.display = 'none';
+        } else if (isOngoing && ongoingCompaniesCount === 0) {
+            // Show text input with message that no ongoing companies available
+            ongoingToggleContainer.style.display = 'none';
+            companyNameInput.style.display = 'block';
+            companyNameInput.setAttribute('required', 'required');
+            companyNameSelect.style.display = 'none';
+            companyNameSelect.removeAttribute('required');
+            if (noOngoingMessage) noOngoingMessage.style.display = 'block';
+            // Clear company_id
+            companyIdHidden.value = '';
+            companyIdDisplay.style.display = 'none';
+        } else {
+            // Show text input, hide dropdown and toggle (non-ongoing status)
+            ongoingToggleContainer.style.display = 'none';
+            companyNameInput.style.display = 'block';
+            companyNameInput.setAttribute('required', 'required');
+            companyNameSelect.style.display = 'none';
+            companyNameSelect.removeAttribute('required');
+            if (noOngoingMessage) noOngoingMessage.style.display = 'none';
+            // Clear company_id when switching to text input
+            companyIdHidden.value = '';
+            companyIdDisplay.style.display = 'none';
+        }
+    }
+    
+    // Function to handle company source toggle (existing vs new)
+    function toggleCompanySource() {
+        if (selectExistingRadio.checked) {
+            // Show dropdown, hide text input
+            companyNameInput.style.display = 'none';
+            companyNameInput.removeAttribute('required');
+            companyNameSelect.style.display = 'block';
+            companyNameSelect.setAttribute('required', 'required');
+            // Clear text input value
+            companyNameInput.value = '';
+        } else if (addNewRadio.checked) {
+            // Show text input, hide dropdown
+            companyNameInput.style.display = 'block';
+            companyNameInput.setAttribute('required', 'required');
+            companyNameSelect.style.display = 'none';
+            companyNameSelect.removeAttribute('required');
+            // Clear dropdown selection and company_id
+            companyNameSelect.value = '';
+            companyIdHidden.value = '';
+            companyIdDisplay.style.display = 'none';
+        }
+    }
+    
+    // Listen to status changes
+    statusSelect.addEventListener('change', toggleCompanyNameField);
+    
+    // Listen to company source toggle changes
+    selectExistingRadio.addEventListener('change', toggleCompanySource);
+    addNewRadio.addEventListener('change', toggleCompanySource);
+    
+    // Listen to company dropdown selection
+    companyNameSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const companyId = selectedOption.getAttribute('data-company-id');
+        const campusType = selectedOption.getAttribute('data-campus-type');
+        const placementOrigin = selectedOption.getAttribute('data-placement-origin');
+        const prAssigned = selectedOption.getAttribute('data-pr-assigned');
+        
+        if (companyId) {
+            // Set company ID
+            companyIdHidden.value = companyId;
+            companyIdDisplay.textContent = 'Company ID: ' + companyId;
+            companyIdDisplay.style.display = 'block';
+            
+            // Auto-fill related fields
+            if (campusType) {
+                const campusTypeSelect = document.querySelector('select[name="campus_type"]');
+                if (campusTypeSelect) {
+                    campusTypeSelect.value = campusType;
+                }
+            }
+            
+            if (placementOrigin) {
+                const placementOriginSelect = document.querySelector('select[name="placement_origin"]');
+                if (placementOriginSelect) {
+                    placementOriginSelect.value = placementOrigin;
+                }
+            }
+            
+            if (prAssigned) {
+                const prAssignedSelect = document.querySelector('select[name="pr_assigned"]');
+                if (prAssignedSelect) {
+                    prAssignedSelect.value = prAssigned;
+                }
+            }
+        } else {
+            companyIdHidden.value = '';
+            companyIdDisplay.style.display = 'none';
+        }
+    });
+    
+    // Initialize on page load
+    toggleCompanyNameField();
+    
+    // Listen to number of students input
+    document.getElementById('numStudents').addEventListener('input', function() {
+        const numStudents = parseInt(this.value) || 0;
+        const container = document.getElementById('studentSearchContainer');
+        const boxesContainer = document.getElementById('studentSearchBoxes');
+        
+        if (numStudents > 0) {
+            container.style.display = 'block';
+            boxesContainer.innerHTML = '';
+            selectedStudents = new Array(numStudents).fill(null);
+            
+            // Create search boxes
+            for (let i = 0; i < numStudents; i++) {
+                createSearchBox(i, boxesContainer);
+            }
+        } else {
+            container.style.display = 'none';
+            boxesContainer.innerHTML = '';
+            selectedStudents = [];
+            updateHiddenField();
+        }
+    });
+    
+    function createSearchBox(index, container) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'mb-3 position-relative';
+        wrapper.innerHTML = `
+            <label class="form-label">Student ${index + 1}</label>
+            <input type="text" 
+                   class="form-control student-search" 
+                   data-index="${index}"
+                   placeholder="Type to search student name..."
+                   autocomplete="off">
+            <div class="search-results position-absolute w-100 bg-white border rounded shadow-sm" 
+                 id="results-${index}" 
+                 style="display: none; max-height: 200px; overflow-y: auto; z-index: 1000;">
+            </div>
+            <small class="text-muted" id="student-info-${index}"></small>
+        `;
+        container.appendChild(wrapper);
+        
+        const input = wrapper.querySelector('.student-search');
+        const resultsDiv = wrapper.querySelector('.search-results');
+        
+        // Search functionality
+        input.addEventListener('input', function() {
+            const query = this.value.trim();
+            
+            if (searchTimeout) clearTimeout(searchTimeout);
+            
+            if (query.length < 2) {
+                resultsDiv.style.display = 'none';
+                return;
+            }
+            
+            searchTimeout = setTimeout(() => {
+                fetch(`/api/search_students?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(students => {
+                        displaySearchResults(students, resultsDiv, index, input);
+                    })
+                    .catch(error => console.error('Search error:', error));
+            }, 300);
+        });
+        
+        // Hide results when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!wrapper.contains(e.target)) {
+                resultsDiv.style.display = 'none';
+            }
+        });
+    }
+    
+    function displaySearchResults(students, resultsDiv, index, inputElement) {
+        if (students.length === 0) {
+            resultsDiv.innerHTML = '<div class="p-2 text-muted">No students found</div>';
+            resultsDiv.style.display = 'block';
+            return;
+        }
+        
+        resultsDiv.innerHTML = students.map(student => {
+            const isPlaced = student.is_placed;
+            const disabledClass = isPlaced ? 'opacity-50' : '';
+            const cursor = isPlaced ? 'not-allowed' : 'pointer';
+            const placedBadge = isPlaced ? '<span class="badge bg-danger ms-2">Already Placed</span>' : '';
+            
+            return `
+                <div class="search-result-item p-2 border-bottom ${disabledClass}" 
+                     style="cursor: ${cursor};"
+                     data-name="${student.name}"
+                     data-reg="${student.reg_no}"
+                     data-class="${student.class}"
+                     data-placed="${isPlaced}"
+                     data-index="${index}">
+                    <strong>${student.name}</strong>${placedBadge}
+                    <br>
+                    <small class="text-muted">${student.reg_no} - ${student.class}</small>
+                </div>
+            `;
+        }).join('');
+        
+        resultsDiv.style.display = 'block';
+        
+        // Add click handlers to result items
+        resultsDiv.querySelectorAll('.search-result-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const isPlaced = this.getAttribute('data-placed') === 'true';
+                
+                if (isPlaced) {
+                    alert('This student is already placed and cannot be added to a new record.');
+                    return;
+                }
+                
+                const name = this.getAttribute('data-name');
+                const regNo = this.getAttribute('data-reg');
+                const studentClass = this.getAttribute('data-class');
+                const idx = parseInt(this.getAttribute('data-index'));
+                
+                selectStudent(idx, name, regNo, studentClass, inputElement);
+                resultsDiv.style.display = 'none';
+            });
+            
+            // Hover effect (only for non-placed students)
+            item.addEventListener('mouseenter', function() {
+                const isPlaced = this.getAttribute('data-placed') === 'true';
+                if (!isPlaced) {
+                    this.style.backgroundColor = '#f8f9fa';
+                }
+            });
+            item.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = 'white';
+            });
+        });
+    }
+    
+    function selectStudent(index, name, regNo, studentClass, inputElement) {
+        selectedStudents[index] = {
+            name: name,
+            reg_no: regNo,
+            class: studentClass
+        };
+        
+        inputElement.value = name;
+        document.getElementById(`student-info-${index}`).innerHTML = 
+            `<span class="badge bg-info">${regNo}</span> <span class="badge bg-success">${studentClass}</span>`;
+        
+        updateHiddenField();
+        updateClassPreview();
+    }
+    
+    function updateHiddenField() {
+        const names = selectedStudents
+            .filter(s => s !== null)
+            .map(s => s.name)
+            .join(', ');
+        
+        document.getElementById('studentNamesHidden').value = names;
+    }
+    
+    function updateClassPreview() {
+        const classes = selectedStudents
+            .filter(s => s !== null)
+            .map(s => s.class);
+        
+        if (classes.length > 0) {
+            const classCount = {};
+            classes.forEach(c => {
+                classCount[c] = (classCount[c] || 0) + 1;
+            });
+            
+            const classDisplay = Object.entries(classCount)
+                .map(([cls, count]) => `<span class="badge bg-primary me-2">${cls}: ${count} student(s)</span>`)
+                .join('');
+            
+            document.getElementById('classDisplay').innerHTML = classDisplay;
+            document.getElementById('classPreview').style.display = 'block';
+        } else {
+            document.getElementById('classPreview').style.display = 'none';
+        }
+    }
+    
+    // Form validation before submit
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const numStudents = parseInt(document.getElementById('numStudents').value) || 0;
+        const selectedCount = selectedStudents.filter(s => s !== null).length;
+        
+        // If "Add New" is selected for ongoing status, clear company_id so new one is generated
+        const selectedStatus = statusSelect.value.toLowerCase();
+        const isOngoing = selectedStatus === 'on-going' || selectedStatus === 'ongoing' || selectedStatus === 'on going';
+        if (isOngoing && addNewRadio && addNewRadio.checked) {
+            companyIdHidden.value = '';
+        }
+        
+        if (numStudents > 0 && selectedCount !== numStudents) {
+            e.preventDefault();
+            alert(`Please select all ${numStudents} students before submitting.`);
+            return false;
+        }
+    });
+</script>
+{% endblock %}

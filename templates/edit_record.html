@@ -1,0 +1,364 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Record - Placement Management{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Edit Placement Record</h1>
+    <p class="text-muted">Update the details for {{ record.company_name }}</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card table-custom">
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Company ID</label>
+                        <input type="text" class="form-control" value="{{ record.company_id }}" disabled>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Company Name *</label>
+                            <input type="text" class="form-control" name="company_name" 
+                                   value="{{ record.company_name }}" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Campus Type *</label>
+                            <select class="form-select" name="campus_type" required>
+                                <option value="On Campus" {% if record.campus_type == 'On Campus' %}selected{% endif %}>On Campus</option>
+                                <option value="Off Campus" {% if record.campus_type == 'Off Campus' %}selected{% endif %}>Off Campus</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">PR Assigned</label>
+                            <select class="form-select" name="pr_assigned">
+                                <option value="">Select PR</option>
+                                {% for code, name in pr_mapping.items() %}
+                                <option value="{{ code }}" {% if record.pr_assigned == code %}selected{% endif %}>
+                                    {{ code }} - {{ name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Placement Origin *</label>
+                            <select class="form-select" name="placement_origin" required>
+                                <option value="CPCG" {% if record.placement_origin == 'CPCG' %}selected{% endif %}>CPCG</option>
+                                <option value="Department" {% if record.placement_origin == 'Department' %}selected{% endif %}>Department</option>
+                                <option value="Off Campus" {% if record.placement_origin == 'Off Campus' %}selected{% endif %}>Off Campus</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Status *</label>
+                            <select class="form-select" name="status" required>
+                                <option value="Completed" {% if record.status == 'Completed' %}selected{% endif %}>Completed</option>
+                                <option value="On-going" {% if record.status == 'On-going' %}selected{% endif %}>On-going</option>
+                                <option value="On-Hold" {% if record.status == 'On-Hold' %}selected{% endif %}>On-Hold</option>
+                                <option value="Cancelled" {% if record.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Number of Students Placed</label>
+                            <input type="number" class="form-control" name="noof_students_placed" id="numStudents"
+                                   value="{{ record.noof_students_placed if record.noof_students_placed else '' }}" min="0">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Role</label>
+                        <input type="text" class="form-control" name="role" 
+                               value="{{ record.role if record.role else '' }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Package</label>
+                        <input type="text" class="form-control" name="package" 
+                               value="{{ record.package if record.package else '' }}">
+                    </div>
+                    
+                    <div class="mb-3" id="studentSearchContainer" style="display: none;">
+                        <label class="form-label">Student Names</label>
+                        <div id="studentSearchBoxes"></div>
+                        <small class="text-muted">Type to search for students by name. Class will be auto-detected.</small>
+                    </div>
+                    
+                    <!-- Hidden field to store comma-separated student names -->
+                    <input type="hidden" name="student_names" id="studentNamesHidden" value="{{ record.student_names if record.student_names else '' }}">
+                    
+                    <div class="mb-4" id="classPreview" style="display: none;">
+                        <label class="form-label">Detected Classes</label>
+                        <div id="classDisplay" class="alert alert-info"></div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Update Record
+                        </button>
+                        <a href="{{ url_for('companies') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let selectedStudents = [];
+    let searchTimeout = null;
+    
+    // Initialize with existing student names
+    window.addEventListener('DOMContentLoaded', function() {
+        const hiddenField = document.getElementById('studentNamesHidden');
+        const existingNames = hiddenField.value.trim();
+        
+        if (existingNames) {
+            const names = existingNames.split(',').map(n => n.trim()).filter(n => n);
+            document.getElementById('numStudents').value = names.length;
+            
+            // Trigger the input event to create search boxes
+            const event = new Event('input');
+            document.getElementById('numStudents').dispatchEvent(event);
+            
+            // Pre-fill the student names after a short delay
+            setTimeout(() => {
+                names.forEach((name, index) => {
+                    const input = document.querySelector(`input[data-index="${index}"]`);
+                    if (input) {
+                        input.value = name;
+                        // Mark as pre-filled
+                        selectedStudents[index] = { name: name, reg_no: '', class: '' };
+                    }
+                });
+                updateHiddenField();
+            }, 100);
+        }
+    });
+    
+    // Listen to number of students input
+    document.getElementById('numStudents').addEventListener('input', function() {
+        const numStudents = parseInt(this.value) || 0;
+        const container = document.getElementById('studentSearchContainer');
+        const boxesContainer = document.getElementById('studentSearchBoxes');
+        
+        if (numStudents > 0) {
+            container.style.display = 'block';
+            boxesContainer.innerHTML = '';
+            
+            // Keep existing selections if resizing
+            const oldSelections = [...selectedStudents];
+            selectedStudents = new Array(numStudents).fill(null);
+            
+            // Restore old selections
+            for (let i = 0; i < Math.min(oldSelections.length, numStudents); i++) {
+                selectedStudents[i] = oldSelections[i];
+            }
+            
+            // Create search boxes
+            for (let i = 0; i < numStudents; i++) {
+                createSearchBox(i, boxesContainer);
+            }
+        } else {
+            container.style.display = 'none';
+            boxesContainer.innerHTML = '';
+            selectedStudents = [];
+            updateHiddenField();
+        }
+    });
+    
+    function createSearchBox(index, container) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'mb-3 position-relative';
+        wrapper.innerHTML = `
+            <label class="form-label">Student ${index + 1}</label>
+            <input type="text" 
+                   class="form-control student-search" 
+                   data-index="${index}"
+                   placeholder="Type to search student name..."
+                   autocomplete="off">
+            <div class="search-results position-absolute w-100 bg-white border rounded shadow-sm" 
+                 id="results-${index}" 
+                 style="display: none; max-height: 200px; overflow-y: auto; z-index: 1000;">
+            </div>
+            <small class="text-muted" id="student-info-${index}"></small>
+        `;
+        container.appendChild(wrapper);
+        
+        const input = wrapper.querySelector('.student-search');
+        const resultsDiv = wrapper.querySelector('.search-results');
+        
+        // Search functionality
+        input.addEventListener('input', function() {
+            const query = this.value.trim();
+            
+            if (searchTimeout) clearTimeout(searchTimeout);
+            
+            if (query.length < 2) {
+                resultsDiv.style.display = 'none';
+                return;
+            }
+            
+            searchTimeout = setTimeout(() => {
+                fetch(`/api/search_students?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(students => {
+                        displaySearchResults(students, resultsDiv, index, input);
+                    })
+                    .catch(error => console.error('Search error:', error));
+            }, 300);
+        });
+        
+        // Hide results when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!wrapper.contains(e.target)) {
+                resultsDiv.style.display = 'none';
+            }
+        });
+    }
+    
+    function displaySearchResults(students, resultsDiv, index, inputElement) {
+        if (students.length === 0) {
+            resultsDiv.innerHTML = '<div class="p-2 text-muted">No students found</div>';
+            resultsDiv.style.display = 'block';
+            return;
+        }
+        
+        // Get existing student names in this record
+        const hiddenField = document.getElementById('studentNamesHidden');
+        const existingNames = hiddenField.value.trim();
+        const existingStudentSet = new Set();
+        if (existingNames) {
+            existingNames.split(',').map(n => n.trim().toUpperCase()).forEach(n => existingStudentSet.add(n));
+        }
+        
+        resultsDiv.innerHTML = students.map(student => {
+            // Allow if student is in current record, otherwise check if placed
+            const isInCurrentRecord = existingStudentSet.has(student.name.toUpperCase());
+            const isPlaced = student.is_placed && !isInCurrentRecord;
+            const disabledClass = isPlaced ? 'opacity-50' : '';
+            const cursor = isPlaced ? 'not-allowed' : 'pointer';
+            const placedBadge = isPlaced ? '<span class="badge bg-danger ms-2">Already Placed</span>' : '';
+            
+            return `
+                <div class="search-result-item p-2 border-bottom ${disabledClass}" 
+                     style="cursor: ${cursor};"
+                     data-name="${student.name}"
+                     data-reg="${student.reg_no}"
+                     data-class="${student.class}"
+                     data-placed="${isPlaced}"
+                     data-index="${index}">
+                    <strong>${student.name}</strong>${placedBadge}
+                    <br>
+                    <small class="text-muted">${student.reg_no} - ${student.class}</small>
+                </div>
+            `;
+        }).join('');
+        
+        resultsDiv.style.display = 'block';
+        
+        // Add click handlers to result items
+        resultsDiv.querySelectorAll('.search-result-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const isPlaced = this.getAttribute('data-placed') === 'true';
+                
+                if (isPlaced) {
+                    alert('This student is already placed in another record and cannot be selected.');
+                    return;
+                }
+                
+                const name = this.getAttribute('data-name');
+                const regNo = this.getAttribute('data-reg');
+                const studentClass = this.getAttribute('data-class');
+                const idx = parseInt(this.getAttribute('data-index'));
+                
+                selectStudent(idx, name, regNo, studentClass, inputElement);
+                resultsDiv.style.display = 'none';
+            });
+            
+            // Hover effect (only for non-placed students)
+            item.addEventListener('mouseenter', function() {
+                const isPlaced = this.getAttribute('data-placed') === 'true';
+                if (!isPlaced) {
+                    this.style.backgroundColor = '#f8f9fa';
+                }
+            });
+            item.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = 'white';
+            });
+        });
+    }
+    
+    function selectStudent(index, name, regNo, studentClass, inputElement) {
+        selectedStudents[index] = {
+            name: name,
+            reg_no: regNo,
+            class: studentClass
+        };
+        
+        inputElement.value = name;
+        document.getElementById(`student-info-${index}`).innerHTML = 
+            `<span class="badge bg-info">${regNo}</span> <span class="badge bg-success">${studentClass}</span>`;
+        
+        updateHiddenField();
+        updateClassPreview();
+    }
+    
+    function updateHiddenField() {
+        const names = selectedStudents
+            .filter(s => s !== null)
+            .map(s => s.name)
+            .join(', ');
+        
+        document.getElementById('studentNamesHidden').value = names;
+    }
+    
+    function updateClassPreview() {
+        const classes = selectedStudents
+            .filter(s => s !== null && s.class)
+            .map(s => s.class);
+        
+        if (classes.length > 0) {
+            const classCount = {};
+            classes.forEach(c => {
+                classCount[c] = (classCount[c] || 0) + 1;
+            });
+            
+            const classDisplay = Object.entries(classCount)
+                .map(([cls, count]) => `<span class="badge bg-primary me-2">${cls}: ${count} student(s)</span>`)
+                .join('');
+            
+            document.getElementById('classDisplay').innerHTML = classDisplay;
+            document.getElementById('classPreview').style.display = 'block';
+        } else {
+            document.getElementById('classPreview').style.display = 'none';
+        }
+    }
+    
+    // Form validation before submit
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const numStudents = parseInt(document.getElementById('numStudents').value) || 0;
+        const selectedCount = selectedStudents.filter(s => s !== null).length;
+        
+        if (numStudents > 0 && selectedCount !== numStudents) {
+            e.preventDefault();
+            alert(`Please select all ${numStudents} students before submitting.`);
+            return false;
+        }
+    });
+</script>
+{% endblock %}

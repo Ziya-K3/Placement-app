@@ -1,0 +1,1011 @@
+{% extends "base.html" %}
+
+{% block title %}Companies - Placement Management{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="page-title">Company Management</h1>
+        <p class="text-muted">Manage placement records and company details</p>
+    </div>
+    <div>
+        <input type="text" id="searchBox" class="form-control" placeholder="🔍 Search companies..." style="width: 300px;">
+    </div>
+</div>
+
+<!-- Info Banner -->
+<div class="alert alert-info mb-4" role="alert">
+    <i class="bi bi-info-circle-fill me-2"></i>
+    <strong>Tip:</strong> Click on any chart segment to see the list of companies in that category!
+</div>
+
+<!-- Status Chart Section -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="card-custom p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0" style="font-weight: 600;">On-Campus Status Overview</h5>
+                <span class="badge" style="background: rgba(11, 114, 133, 0.1); color: var(--primary-accent);">
+                    <i class="bi bi-graph-up"></i> Status Distribution
+                </span>
+            </div>
+            <div style="position: relative; height: 300px;">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card-custom p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0" style="font-weight: 600;">Completed On Campus: CPCG vs Department</h5>
+                <span class="badge" style="background: rgba(22, 163, 74, 0.1); color: var(--success);">
+                    <i class="bi bi-check-circle"></i> Completed Breakdown
+                </span>
+            </div>
+            <div style="position: relative; height: 300px;">
+                <canvas id="completedBreakdownChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- On-Campus vs Off-Campus Insights -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card-custom p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0" style="font-weight: 600;">On-Campus Status by Origin</h5>
+                <span class="badge" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">
+                    <i class="bi bi-diagram-3"></i> CPCG vs Department
+                </span>
+            </div>
+            <div style="position: relative; height: 380px;">
+                <canvas id="onCampusOriginChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card-custom p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0" style="font-weight: 600;">Off-Campus Snapshot</h5>
+                <span class="badge bg-secondary-subtle text-secondary">
+                    {{ off_campus_total }} drives
+                </span>
+            </div>
+            <div style="position: relative; height: 220px;">
+                <canvas id="offCampusChart"></canvas>
+            </div>
+            <div class="mt-3">
+                <h6 class="text-muted">Origin Distribution</h6>
+                <ul class="list-group list-group-flush">
+                    {% if off_campus_origin_stats %}
+                        {% for origin, count in off_campus_origin_stats.items() %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            {{ origin }}
+                            <span class="badge bg-primary-subtle text-primary">{{ count }}</span>
+                        </li>
+                        {% endfor %}
+                    {% else %}
+                        <li class="list-group-item px-0 text-muted">No off-campus drives recorded.</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Company-Wise Records View -->
+<div class="card table-custom mb-4">
+    <div class="card-header" style="background: var(--surface); padding: 20px; border-bottom: 1px solid var(--border-color);">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-0" style="font-weight: 600;"><i class="bi bi-building me-2"></i>Company-Wise Records</h5>
+                <p class="mb-0 mt-1" style="font-size: 13px; color: var(--text-secondary);">View all records grouped by company for easy understanding</p>
+            </div>
+            {% if user_role == 'admin' %}
+            <a href="{{ url_for('add_record') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Add New Record
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="accordion" id="companyWiseAccordion">
+            {% for company in company_wise_records %}
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading{{ company.company_id }}">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ company.company_id }}">
+                        <div class="d-flex justify-content-between align-items-center w-100 me-3">
+                            <div>
+                                <strong>{{ company.company_name }}</strong>
+                                <span class="badge bg-secondary ms-2">{{ company.company_id }}</span>
+                                {% if company.campus_type %}
+                                <span class="badge bg-info ms-2">{{ company.campus_type }}</span>
+                                {% endif %}
+                                {% if company.pr_name %}
+                                <span class="badge bg-primary ms-2">{{ company.pr_name }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-end">
+                                {% if company.total_students_placed and company.total_students_placed > 0 %}
+                                <span class="badge bg-success me-2">
+                                    <i class="bi bi-people-fill"></i> {{ company.total_students_placed }} Student{{ 's' if company.total_students_placed > 1 else '' }} Placed
+                                </span>
+                                {% endif %}
+                                <span class="badge bg-secondary">{{ company.records|length }} record(s)</span>
+                            </div>
+                        </div>
+                    </button>
+                </h2>
+                <div id="collapse{{ company.company_id }}" class="accordion-collapse collapse" data-bs-parent="#companyWiseAccordion">
+                    <div class="accordion-body" style="padding: 24px;">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td style="width: 150px; color: var(--text-secondary);"><strong>Company ID:</strong></td>
+                                        <td><span class="badge bg-secondary">{{ company.company_id }}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color: var(--text-secondary);"><strong>Campus Type:</strong></td>
+                                        <td>{{ company.campus_type or '-' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color: var(--text-secondary);"><strong>Placement Origin:</strong></td>
+                                        <td>{{ company.placement_origin or '-' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color: var(--text-secondary);"><strong>PR Assigned:</strong></td>
+                                        <td>
+                                            {% if company.pr_name %}
+                                                <span class="badge bg-info">{{ company.pr_name }}</span>
+                                                {% if company.pr_assigned %}
+                                                    <small class="text-muted">({{ company.pr_assigned }})</small>
+                                                {% endif %}
+                                            {% elif company.pr_assigned %}
+                                                <span class="badge bg-secondary">{{ company.pr_assigned }}</span>
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <h6 class="mb-3">All Records for This Company</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Record ID</th>
+                                        <th>Status</th>
+                                        <th>Role</th>
+                                        <th>Package</th>
+                                        <th>Students</th>
+                                        <th>No. of Students</th>
+                                        <th>Class Distribution</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for record in company.records %}
+                                    <tr>
+                                        <td><span class="badge bg-secondary">#{{ record.record_id }}</span></td>
+                                        <td>
+                                            {% if record.status == 'Completed' %}
+                                                <span class="badge bg-success">Completed</span>
+                                            {% elif record.status == 'On-going' %}
+                                                <span class="badge bg-warning">On-going</span>
+                                            {% elif record.status == 'Cancelled' %}
+                                                <span class="badge bg-danger">Cancelled</span>
+                                            {% elif record.status == 'On-Hold' %}
+                                                <span class="badge bg-secondary">On-Hold</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ record.status or '-' }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ record.role or '-' }}</td>
+                                        <td>{{ record.package or '-' }}</td>
+                                        <td>
+                                            {% if record.student_names %}
+                                                <small>{{ record.student_names[:50] }}{% if record.student_names|length > 50 %}...{% endif %}</small>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ record.noof_students_placed or '-' }}</td>
+                                        <td><small>{{ record.class_distribution or '-' }}</small></td>
+                                        <td>
+                                            {% if user_role == 'admin' and record.record_id %}
+                                            <a href="{{ url_for('edit_record', record_id=record.record_id) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-pencil"></i> Edit
+                                            </a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="card table-custom">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">All Records ({{ companies|length }})</h5>
+            {% if user_role == 'admin' %}
+            <a href="{{ url_for('add_record') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Add New Record
+            </a>
+            {% endif %}
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-hover" id="companiesTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>Company ID</th>
+                        <th>Company Name</th>
+                        <th>Campus Type</th>
+                        <th>PR</th>
+                        <th>Status</th>
+                        <th>Students Placed</th>
+                        <th>Role</th>
+                        <th>Package</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for company in company_overview %}
+                    <tr>
+                        <td><span class="badge bg-secondary">{{ company.company_id }}</span></td>
+                        <td><strong>{{ company.company_name }}</strong></td>
+                        <td>{{ company.campus_type if company.campus_type else '-' }}</td>
+                        <td>
+                            {% if company.pr_name %}
+                                <span class="badge bg-info">{{ company.pr_name }}</span>
+                                {% if company.pr_assigned %}
+                                    <small class="text-muted d-block">({{ company.pr_assigned }})</small>
+                                {% endif %}
+                            {% elif company.pr_assigned %}
+                                <span class="badge bg-secondary">{{ company.pr_assigned }}</span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if company.status == 'Completed' %}
+                                <span class="badge bg-success">Completed</span>
+                            {% elif company.status == 'On-going' %}
+                                <span class="badge bg-warning">On-going</span>
+                            {% elif company.status == 'Cancelled' %}
+                                <span class="badge bg-danger">Cancelled</span>
+                            {% elif company.status == 'On-Hold' %}
+                                <span class="badge bg-secondary">On-Hold</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ company.status if company.status else '-' }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if company.total_students_placed and company.total_students_placed > 0 %}
+                                <span class="badge bg-success" style="font-size: 0.9rem; padding: 0.4em 0.6em;">
+                                    <i class="bi bi-people-fill"></i> {{ company.total_students_placed }} Student{{ 's' if company.total_students_placed > 1 else '' }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ company.role if company.role and company.role is string else '-' }}</td>
+                        <td>{{ company.package if company.package and company.package is string else '-' }}</td>
+                        <td>
+                            <button onclick="viewCompanyStats('{{ company.company_id }}')" class="btn btn-sm btn-outline-info" title="View Statistics">
+                                <i class="bi bi-bar-chart"></i>
+                            </button>
+                            {% if user_role == 'admin' %}
+                            <a href="{{ url_for('add_record') }}?company_id={{ company.company_id }}&company_name={{ company.company_name|urlencode }}" class="btn btn-sm btn-outline-primary" title="Add Record">
+                                <i class="bi bi-plus-circle"></i>
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Company Statistics Modal -->
+<div class="modal fade" id="companyStatsModal" tabindex="-1" aria-labelledby="companyStatsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="companyStatsModalLabel">Company Statistics</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="statsLoading" class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading statistics...</p>
+                </div>
+                
+                <div id="statsContent" style="display: none;">
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <h4 id="companyNameTitle"></h4>
+                            <p class="text-muted" id="companyIdSubtitle"></p>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h3 id="totalStudentsCount">0</h3>
+                                    <p class="mb-0">Total Students Placed</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h3 id="totalDrivesCount">0</h3>
+                                    <p class="mb-0">Total Drives</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h3 id="classesCount">0</h3>
+                                    <p class="mb-0">Classes</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <h5>Class Distribution</h5>
+                            <div id="classDistribution" class="d-flex flex-wrap gap-2"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h5>Student Details</h5>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Name</th>
+                                            <th>Reg No</th>
+                                            <th>Class</th>
+                                            <th>Role</th>
+                                            <th>Package</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="studentDetailsTable">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="statsError" style="display: none;" class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span id="errorMessage">Error loading statistics</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart Details Modal -->
+<div class="modal fade" id="chartDetailsModal" tabindex="-1" aria-labelledby="chartDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="chartDetailsModalLabel">Companies List</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info mb-3" id="filterInfo">
+                    <i class="bi bi-info-circle"></i>
+                    <span id="filterDescription">Loading...</span>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Company Name</th>
+                                <th>Status</th>
+                                <th>Campus Type</th>
+                                <th>Origin</th>
+                                <th>Role</th>
+                                <th>Package</th>
+                                <th>PR</th>
+                            </tr>
+                        </thead>
+                        <tbody id="chartDetailsTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    canvas {
+        cursor: pointer !important;
+    }
+    .chart-container {
+        position: relative;
+    }
+    .chart-container:hover {
+        opacity: 0.95;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Store companies data for filtering - separate datasets for on-campus and off-campus
+    const allCompaniesData = {{ company_overview | tojson }};
+    const onCampusCompaniesData = {{ on_campus_companies | tojson }};
+    const offCampusCompaniesData = {{ off_campus_companies | tojson }};
+    
+    console.log('All Companies Data loaded:', allCompaniesData.length);
+    console.log('On-Campus Companies Data loaded:', onCampusCompaniesData.length);
+    console.log('Off-Campus Companies Data loaded:', offCampusCompaniesData.length);
+    
+    // Function to show companies in modal based on filters
+    function showCompaniesModal(filters, title, useOnCampusOnly = false, useOffCampusOnly = false) {
+        console.log('Showing companies with filters:', filters, 'OnCampusOnly:', useOnCampusOnly, 'OffCampusOnly:', useOffCampusOnly);
+        
+        // Select the appropriate dataset
+        let dataSource = allCompaniesData;
+        if (useOnCampusOnly) {
+            dataSource = onCampusCompaniesData;
+            console.log('Using ON-CAMPUS data only');
+        } else if (useOffCampusOnly) {
+            dataSource = offCampusCompaniesData;
+            console.log('Using OFF-CAMPUS data only');
+        }
+        
+        // Filter companies
+        let filteredCompanies = dataSource.filter(company => {
+            let matches = true;
+            if (filters.status) {
+                matches = matches && company.status === filters.status;
+            }
+            if (filters.campus) {
+                matches = matches && company.campus_type === filters.campus;
+            }
+            if (filters.origin) {
+                matches = matches && company.placement_origin === filters.origin;
+            }
+            // If using on-campus only, ensure campus_type is "On Campus"
+            if (useOnCampusOnly) {
+                matches = matches && company.campus_type && company.campus_type.toLowerCase() === 'on campus';
+            }
+            // If using off-campus only, ensure campus_type is NOT "On Campus"
+            if (useOffCampusOnly) {
+                matches = matches && (!company.campus_type || company.campus_type.toLowerCase() !== 'on campus');
+            }
+            return matches;
+        });
+        
+        console.log('Filtered companies:', filteredCompanies.length);
+        
+        // Final verification: if useOnCampusOnly, remove any off-campus companies
+        if (useOnCampusOnly) {
+            filteredCompanies = filteredCompanies.filter(company => {
+                const campusType = (company.campus_type || '').toString().toLowerCase().trim();
+                return campusType === 'on campus';
+            });
+        }
+        
+        // Final verification: if useOffCampusOnly, remove any on-campus companies
+        if (useOffCampusOnly) {
+            filteredCompanies = filteredCompanies.filter(company => {
+                const campusType = (company.campus_type || '').toString().toLowerCase().trim();
+                return campusType !== 'on campus';
+            });
+        }
+        
+        // Update modal title and description
+        document.getElementById('chartDetailsModalLabel').textContent = title;
+        let filterDesc = `Showing ${filteredCompanies.length} companies`;
+        if (useOnCampusOnly) {
+            filterDesc += ' (On Campus only)';
+        } else if (useOffCampusOnly) {
+            filterDesc += ' (Off Campus only)';
+        }
+        filterDesc += ` matching: ${JSON.stringify(filters)}`;
+        document.getElementById('filterDescription').textContent = filterDesc;
+        
+        // Populate table
+        const tableBody = document.getElementById('chartDetailsTable');
+        tableBody.innerHTML = '';
+        
+        if (filteredCompanies.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No companies found matching these criteria</td></tr>';
+        } else {
+            filteredCompanies.forEach((company, index) => {
+                const prLabel = company.pr_name || company.pr_assigned || 'N/A';
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td><strong>${company.company_name || 'N/A'}</strong></td>
+                    <td><span class="badge ${
+                        company.status === 'Completed' ? 'bg-success' :
+                        company.status === 'On-going' ? 'bg-warning' :
+                        company.status === 'Cancelled' ? 'bg-danger' : 'bg-secondary'
+                    }">${company.status || 'N/A'}</span></td>
+                    <td>${company.campus_type || 'N/A'}</td>
+                    <td>${company.placement_origin || 'N/A'}</td>
+                    <td>${company.role || 'N/A'}</td>
+                    <td>${company.package || 'N/A'}</td>
+                    <td><span class="badge bg-info">${prLabel}</span></td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('chartDetailsModal'));
+        modal.show();
+    }
+    
+    // Status Chart Configuration
+    try {
+        const statusData = {{ on_campus_status_stats | tojson }};
+        console.log('Status Data:', statusData);
+        
+        if (statusData && Object.keys(statusData).length > 0) {
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            
+            // Define colors for different statuses
+            const statusColors = {
+                'Completed': '#16A34A',  // Green
+                'On-going': '#F59E0B',   // Orange
+                'Cancelled': '#DC2626',  // Red
+                'On-Hold': '#6B7280'     // Gray
+            };
+            
+            const labels = Object.keys(statusData);
+            const data = Object.values(statusData);
+            const backgroundColors = labels.map(label => statusColors[label] || '#0B7285');
+            
+            const statusChart = new Chart(statusCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Number of Drives',
+                        data: data,
+                        backgroundColor: backgroundColors,
+                        borderRadius: 8,
+                        barThickness: 60
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 3,
+                    onClick: (event, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const index = activeElements[0].index;
+                            const status = labels[index];
+                            showCompaniesModal({ status: status, campus: 'On Campus' }, `${status} Drives (On Campus)`, true, false);
+                        }
+                    },
+                    onHover: (event, activeElements) => {
+                        event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: '#1F2937',
+                            padding: 12,
+                            titleFont: {
+                                size: 14,
+                                weight: '600'
+                            },
+                            bodyFont: {
+                                size: 13
+                            },
+                            borderColor: '#E5E7EB',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y + ' placement drives';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0,
+                                font: {
+                                    size: 12
+                                }
+                            },
+                            grid: {
+                                color: '#F3F4F6',
+                                drawBorder: false
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: {
+                                    size: 12,
+                                    weight: '500'
+                                }
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        } else {
+            console.log('No status data available');
+            document.getElementById('statusChart').parentElement.innerHTML = 
+                '<div class="text-center text-muted py-5"><i class="bi bi-info-circle me-2"></i>No status data available yet</div>';
+        }
+    } catch (error) {
+        console.error('Error creating status chart:', error);
+    }
+    
+    // Completed On Campus Breakdown Chart
+    try {
+        const completedData = {{ completed_on_campus_breakdown | tojson }};
+        console.log('Completed On Campus Data:', completedData);
+        
+        if (completedData && Object.keys(completedData).length > 0) {
+            const completedOnCampus = completedData;
+            const completedCtx = document.getElementById('completedBreakdownChart').getContext('2d');
+            
+            const completedChart = new Chart(completedCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(completedOnCampus),
+                    datasets: [{
+                        data: Object.values(completedOnCampus),
+                        backgroundColor: [
+                            '#0B7285',  // Teal for CPCG
+                            '#14B8A6',  // Cyan for Department
+                            '#F59E0B'   // Orange for others
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.5,
+                    onClick: (event, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const index = activeElements[0].index;
+                            const origin = Object.keys(completedOnCampus)[index];
+                            showCompaniesModal({ 
+                                status: 'Completed', 
+                                campus: 'On Campus', 
+                                origin: origin 
+                            }, `Completed On Campus - ${origin}`, true, false);
+                        }
+                    },
+                    onHover: (event, activeElements) => {
+                        event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 13,
+                                    weight: '500'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#1F2937',
+                            padding: 12,
+                            titleFont: {
+                                size: 14,
+                                weight: '600'
+                            },
+                            bodyFont: {
+                                size: 13
+                            },
+                            borderColor: '#E5E7EB',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return context.label + ': ' + context.parsed + ' drives (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    },
+                    cutout: '60%'
+                }
+            });
+        } else {
+            document.getElementById('completedBreakdownChart').parentElement.innerHTML = 
+                '<div class="text-center text-muted py-5"><i class="bi bi-info-circle me-2"></i>No completed on campus data available</div>';
+        }
+    } catch (error) {
+        console.error('Error creating completed breakdown chart:', error);
+    }
+    
+    // On-campus status by origin chart
+    try {
+        const onCampusOriginData = {{ on_campus_status_origin | tojson }};
+        console.log('On-campus status by origin:', onCampusOriginData);
+        
+        if (onCampusOriginData && Object.keys(onCampusOriginData).length > 0) {
+            const statuses = Object.keys(onCampusOriginData);
+            const origins = Array.from(new Set(
+                statuses.flatMap(status => Object.keys(onCampusOriginData[status]))
+            ));
+            
+            const colors = ['#0B7285', '#14B8A6', '#F59E0B', '#F97316', '#6366F1'];
+            
+            const datasets = origins.map((origin, idx) => ({
+                label: origin,
+                data: statuses.map(status => onCampusOriginData[status][origin] || 0),
+                backgroundColor: colors[idx % colors.length],
+                borderRadius: 4,
+                barThickness: 24
+            }));
+            
+            const ctx = document.getElementById('onCampusOriginChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: statuses,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 2,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    onClick: (event, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const datasetIndex = activeElements[0].datasetIndex;
+                            const index = activeElements[0].index;
+                            const status = statuses[index];
+                            const origin = origins[datasetIndex];
+                            showCompaniesModal({
+                                status: status,
+                                campus: 'On Campus',
+                                origin: origin
+                            }, `${status} - ${origin} (On Campus)`, true, false);
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#1F2937',
+                            padding: 12,
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.parsed.y} drives`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            ticks: { font: { size: 12, weight: '500' } },
+                            grid: { display: false }
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            ticks: { precision: 0 },
+                            grid: { color: '#F3F4F6', drawBorder: false }
+                        }
+                    }
+                }
+            });
+        } else {
+            document.getElementById('onCampusOriginChart').parentElement.innerHTML = 
+                '<div class="text-center text-muted py-5"><i class="bi bi-info-circle me-2"></i>No on-campus data available</div>';
+        }
+    } catch (error) {
+        console.error('Error creating on-campus origin chart:', error);
+    }
+    
+    // Off-campus snapshot chart
+    try {
+        const offCampusData = {{ off_campus_status_stats | tojson }};
+        console.log('Off-campus status data:', offCampusData);
+        
+        if (offCampusData && Object.keys(offCampusData).length > 0) {
+            const offCtx = document.getElementById('offCampusChart').getContext('2d');
+            new Chart(offCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(offCampusData),
+                    datasets: [{
+                        data: Object.values(offCampusData),
+                        backgroundColor: ['#0B7285', '#F59E0B', '#DC2626', '#6B7280'],
+                        borderWidth: 0,
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    cutout: '65%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                padding: 12
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#1F2937',
+                            padding: 12
+                        }
+                    }
+                }
+            });
+        } else {
+            document.getElementById('offCampusChart').parentElement.innerHTML = 
+                '<div class="text-center text-muted py-5"><i class="bi bi-info-circle me-2"></i>No off-campus data available</div>';
+        }
+    } catch (error) {
+        console.error('Error creating off-campus chart:', error);
+    }
+    
+    // Search functionality
+    document.getElementById('searchBox').addEventListener('keyup', function() {
+        var searchText = this.value.toLowerCase();
+        var table = document.getElementById('companiesTable');
+        var rows = table.getElementsByTagName('tr');
+        
+        for (var i = 1; i < rows.length; i++) {
+            var row = rows[i];
+            var text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchText) ? '' : 'none';
+        }
+    });
+    
+    // Delete record
+    function deleteRecord(recordId) {
+        if (confirm('Are you sure you want to delete this record?')) {
+            window.location.href = '/delete_record/' + recordId;
+        }
+    }
+    
+    // View company statistics
+    function viewCompanyStats(companyId) {
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('companyStatsModal'));
+        modal.show();
+        
+        // Reset UI
+        document.getElementById('statsLoading').style.display = 'block';
+        document.getElementById('statsContent').style.display = 'none';
+        document.getElementById('statsError').style.display = 'none';
+        
+        // Fetch statistics
+        fetch(`/api/company_stats/${companyId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load statistics');
+                }
+                return response.json();
+            })
+            .then(data => {
+                displayCompanyStats(data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('statsLoading').style.display = 'none';
+                document.getElementById('statsError').style.display = 'block';
+                document.getElementById('errorMessage').textContent = error.message;
+            });
+    }
+    
+    function displayCompanyStats(data) {
+        // Hide loading, show content
+        document.getElementById('statsLoading').style.display = 'none';
+        document.getElementById('statsContent').style.display = 'block';
+        
+        // Set header info
+        document.getElementById('companyNameTitle').textContent = data.company_name;
+        document.getElementById('companyIdSubtitle').textContent = `Company ID: ${data.company_id}`;
+        
+        // Set counts
+        document.getElementById('totalStudentsCount').textContent = data.total_students;
+        document.getElementById('totalDrivesCount').textContent = data.total_drives;
+        document.getElementById('classesCount').textContent = Object.keys(data.class_distribution).length;
+        
+        // Display class distribution
+        const classDistDiv = document.getElementById('classDistribution');
+        classDistDiv.innerHTML = '';
+        
+        Object.entries(data.class_distribution).forEach(([className, count]) => {
+            const badge = document.createElement('div');
+            badge.className = 'card p-3 text-center';
+            badge.style.minWidth = '120px';
+            badge.innerHTML = `
+                <h4 class="text-primary mb-0">${count}</h4>
+                <small class="text-muted">${className}</small>
+            `;
+            classDistDiv.appendChild(badge);
+        });
+        
+        // Display student details table
+        const tableBody = document.getElementById('studentDetailsTable');
+        tableBody.innerHTML = '';
+        
+        data.students.forEach((student, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td><strong>${student.name}</strong></td>
+                <td>${student.reg_no}</td>
+                <td><span class="badge bg-info">${student.class}</span></td>
+                <td>${student.role}</td>
+                <td>${student.package}</td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+</script>
+{% endblock %}

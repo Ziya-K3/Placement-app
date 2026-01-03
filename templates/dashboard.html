@@ -1,0 +1,726 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - PlacementHub{% endblock %}
+
+{% block content %}
+<!-- Top Navigation Bar with Search -->
+<div class="top-nav">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item active" aria-current="page"><i class="bi bi-house-door me-2"></i>Dashboard</li>
+        </ol>
+    </nav>
+    
+    <!-- Global Search -->
+    <div class="global-search">
+        <i class="bi bi-search search-icon"></i>
+        <input type="text" id="globalSearch" placeholder="Search anything... (Press Ctrl+K)" autocomplete="off">
+    </div>
+    
+    <div class="d-flex align-items-center gap-3">
+        <span class="text-muted" style="font-size: 13px; white-space: nowrap;">
+            <i class="bi bi-clock me-1"></i>Updated: <strong>Just now</strong>
+        </span>
+    </div>
+</div>
+
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title">Dashboard Overview</h1>
+    <p class="page-subtitle">Comprehensive placement insights and analytics</p>
+</div>
+
+<!-- Key Metrics Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(11, 114, 133, 0.1); color: var(--primary-accent);">
+                <i class="bi bi-people"></i>
+            </div>
+            <div class="stat-value">{{ total_students }}</div>
+            <div class="stat-label">Total Students</div>
+            <div class="stat-change positive">
+                <i class="bi bi-arrow-up"></i> 100% Enrolled
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(22, 163, 74, 0.1); color: var(--success);">
+                <i class="bi bi-check-circle"></i>
+            </div>
+            <div class="stat-value">{{ total_placed }}</div>
+            <div class="stat-label">Students Placed</div>
+            <div class="stat-change positive">
+                <i class="bi bi-arrow-up"></i> {{ ((total_placed / total_students * 100) | round(1)) }}% Placement Rate
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(20, 184, 166, 0.1); color: var(--secondary-accent);">
+                <i class="bi bi-building"></i>
+            </div>
+            <div class="stat-value">{{ total_companies }}</div>
+            <div class="stat-label">Total Companies</div>
+            <div class="stat-change positive">
+                <i class="bi bi-arrow-up"></i> Active Recruiters
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">
+                <i class="bi bi-currency-rupee"></i>
+            </div>
+            <div class="stat-value">{{ avg_package }}</div>
+            <div class="stat-label">Avg Package (LPA)</div>
+            <div class="stat-change positive">
+                <i class="bi bi-arrow-up"></i> Industry Standard
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row g-4 mb-4">
+    <!-- Class Distribution Donut Chart -->
+    <div class="col-lg-6">
+        <div class="card-custom p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0" style="font-weight: 600;">Placement by Class</h5>
+                <span class="badge" style="background: rgba(11, 114, 133, 0.1); color: var(--primary-accent);">
+                    <i class="bi bi-pie-chart"></i> Distribution
+                </span>
+            </div>
+            <div style="position: relative; height: 300px;">
+                <canvas id="classChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- PR Performance Bar Chart -->
+    <div class="col-lg-6">
+        <div class="card-custom p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0" style="font-weight: 600;">PR Performance</h5>
+                <span class="badge" style="background: rgba(20, 184, 166, 0.1); color: var(--secondary-accent);">
+                    <i class="bi bi-bar-chart"></i> Drives Handled
+                </span>
+            </div>
+            <div style="position: relative; height: 300px;">
+                <canvas id="prChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Additional Charts Row -->
+<div class="row g-4 mb-4">
+    <!-- Campus Type Chart -->
+    <div class="col-lg-6">
+        <div class="card-custom p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0" style="font-weight: 600;">On Campus vs Off Campus</h5>
+                <span class="badge" style="background: rgba(22, 163, 74, 0.1); color: var(--success);">
+                    <i class="bi bi-building"></i> Campus Type
+                </span>
+            </div>
+            <div style="position: relative; height: 300px;">
+                <canvas id="campusChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Placement Origin Chart -->
+    <div class="col-lg-6">
+        <div class="card-custom p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0" style="font-weight: 600;">CPCG vs Department</h5>
+                <span class="badge" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">
+                    <i class="bi bi-diagram-3"></i> Placement Origin
+                </span>
+            </div>
+            <div style="position: relative; height: 300px;">
+                <canvas id="originChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Leaderboards Row -->
+<div class="row g-4 mb-4">
+    <!-- Top Companies -->
+    <div class="col-lg-6">
+        <div class="card-custom">
+            <div class="p-4 border-bottom" style="border-color: var(--border-color) !important;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0" style="font-weight: 600;">
+                        <i class="bi bi-trophy text-warning me-2"></i>Top Hiring Companies
+                    </h5>
+                    <span class="text-muted" style="font-size: 13px;">By Students Placed</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">Rank</th>
+                                <th>Company Name</th>
+                                <th class="text-end">Students</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for company, count in top_companies.items() %}
+                            <tr>
+                                <td>
+                                    {% if loop.index == 1 %}
+                                        <span class="badge" style="background: linear-gradient(135deg, #FFD700, #FFA500); color: white;">
+                                            <i class="bi bi-trophy-fill"></i> #{{ loop.index }}
+                                        </span>
+                                    {% elif loop.index == 2 %}
+                                        <span class="badge" style="background: linear-gradient(135deg, #C0C0C0, #A8A8A8); color: white;">
+                                            #{{ loop.index }}
+                                        </span>
+                                    {% elif loop.index == 3 %}
+                                        <span class="badge" style="background: linear-gradient(135deg, #CD7F32, #B8732C); color: white;">
+                                            #{{ loop.index }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">#{{ loop.index }}</span>
+                                    {% endif %}
+                                </td>
+                                <td><strong>{{ company }}</strong></td>
+                                <td class="text-end">
+                                    <span class="badge" style="background: rgba(11, 114, 133, 0.1); color: var(--primary-accent); font-size: 14px;">
+                                        {{ count }} <i class="bi bi-people-fill ms-1"></i>
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top PRs -->
+    <div class="col-lg-6">
+        <div class="card-custom">
+            <div class="p-4 border-bottom" style="border-color: var(--border-color) !important;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0" style="font-weight: 600;">
+                        <i class="bi bi-star text-warning me-2"></i>Top Performing PRs
+                    </h5>
+                    <span class="text-muted" style="font-size: 13px;">By Drives</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">Rank</th>
+                                <th>PR Name</th>
+                                <th class="text-end">Drives</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set sorted_prs = pr_stats.items()|sort(attribute='1', reverse=True) %}
+                            {% for pr_name, count in sorted_prs[:5] %}
+                            <tr>
+                                <td>
+                                    {% if loop.index == 1 %}
+                                        <span class="badge" style="background: linear-gradient(135deg, #FFD700, #FFA500); color: white;">
+                                            <i class="bi bi-star-fill"></i> #{{ loop.index }}
+                                        </span>
+                                    {% elif loop.index == 2 %}
+                                        <span class="badge" style="background: linear-gradient(135deg, #C0C0C0, #A8A8A8); color: white;">
+                                            #{{ loop.index }}
+                                        </span>
+                                    {% elif loop.index == 3 %}
+                                        <span class="badge" style="background: linear-gradient(135deg, #CD7F32, #B8732C); color: white;">
+                                            #{{ loop.index }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">#{{ loop.index }}</span>
+                                    {% endif %}
+                                </td>
+                                <td><strong>{{ pr_name }}</strong></td>
+                                <td class="text-end">
+                                    <span class="badge" style="background: rgba(20, 184, 166, 0.1); color: var(--secondary-accent); font-size: 14px;">
+                                        {{ count }} <i class="bi bi-briefcase-fill ms-1"></i>
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Activity Feed & Quick Actions Row -->
+<div class="row g-4">
+    <!-- Recent Activity Feed -->
+    <div class="col-lg-7">
+        <div class="card-custom">
+            <div class="p-4 border-bottom" style="border-color: var(--border-color) !important;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0" style="font-weight: 600;">
+                        <i class="bi bi-activity text-primary me-2"></i>Recent Activity
+                    </h5>
+                    <span class="badge" style="background: rgba(11, 114, 133, 0.1); color: var(--primary-accent); font-size: 12px;">
+                        Live Updates
+                    </span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="activity-list">
+                    <div class="activity-item">
+                        <div class="activity-icon" style="background: rgba(22, 163, 74, 0.1);">
+                            <i class="bi bi-check-circle text-success"></i>
+                        </div>
+                        <div class="activity-content">
+                            <p class="activity-title"><strong>{{ total_placed }}</strong> students successfully placed across <strong>{{ total_companies }}</strong> companies</p>
+                            <span class="activity-time">Current session statistics</span>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="activity-icon" style="background: rgba(11, 114, 133, 0.1);">
+                            <i class="bi bi-building text-primary"></i>
+                        </div>
+                        <div class="activity-content">
+                            <p class="activity-title">Top recruiter: <strong>{{ top_companies.keys()|list|first if top_companies else 'N/A' }}</strong></p>
+                            <span class="activity-time">Highest student placements this year</span>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="activity-icon" style="background: rgba(245, 158, 11, 0.1);">
+                            <i class="bi bi-currency-rupee" style="color: var(--warning);"></i>
+                        </div>
+                        <div class="activity-content">
+                            <p class="activity-title">Average package: <strong>{{ avg_package }} LPA</strong></p>
+                            <span class="activity-time">Competitive market standard achieved</span>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="activity-icon" style="background: rgba(20, 184, 166, 0.1);">
+                            <i class="bi bi-graph-up text-success"></i>
+                        </div>
+                        <div class="activity-content">
+                            <p class="activity-title">Placement rate: <strong>{{ ((total_placed / total_students * 100) | round(1)) }}%</strong></p>
+                            <span class="activity-time">Excellent performance metrics</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions Card -->
+    <div class="col-lg-5">
+        <div class="card-custom p-4" style="height: 100%;">
+            <h5 class="mb-3" style="font-weight: 600;">
+                <i class="bi bi-lightning-charge text-warning me-2"></i>Quick Actions
+            </h5>
+            <div class="d-grid gap-3">
+                {% if user_role == 'admin' %}
+                <a href="{{ url_for('add_record') }}" class="btn btn-primary d-flex align-items-center justify-content-between">
+                    <span><i class="bi bi-plus-circle me-2"></i>Add New Placement</span>
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+                {% endif %}
+                <a href="{{ url_for('companies') }}" class="btn btn-outline-primary d-flex align-items-center justify-content-between">
+                    <span><i class="bi bi-building me-2"></i>View All Companies</span>
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+                <a href="{{ url_for('students') }}" class="btn btn-outline-primary d-flex align-items-center justify-content-between">
+                    <span><i class="bi bi-people me-2"></i>View All Students</span>
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+                <a href="{{ url_for('pr_dashboard') }}" class="btn btn-outline-primary d-flex align-items-center justify-content-between">
+                    <span><i class="bi bi-person-badge me-2"></i>PR Dashboard</span>
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            
+            <!-- System Status -->
+            <div class="mt-4 pt-4" style="border-top: 1px solid var(--border-color);">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span style="font-size: 13px; color: var(--text-secondary);">System Status</span>
+                    <span class="badge bg-success" style="font-size: 11px;">
+                        <i class="bi bi-circle-fill me-1" style="font-size: 8px;"></i>All Systems Operational
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Wrap everything in try-catch for debugging
+    try {
+        // Global Search Functionality
+        const globalSearch = document.getElementById('globalSearch');
+        
+        if (globalSearch) {
+            globalSearch.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    const query = this.value.trim();
+                    if (query) {
+                        // Redirect to companies page with search query
+                        window.location.href = `/companies?search=${encodeURIComponent(query)}`;
+                    }
+                }
+            });
+            
+            // Add keyboard shortcut Ctrl+K or Cmd+K for search
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    globalSearch.focus();
+                }
+            });
+        }
+        
+        // Teal Mist Color Palette
+        const colors = {
+            primary: '#0B7285',
+            secondary: '#14B8A6',
+            success: '#16A34A',
+            warning: '#F59E0B',
+            danger: '#DC2626',
+            light: ['#E0F2FE', '#BAE6FD', '#7DD3FC', '#38BDF8', '#0EA5E9']
+        };
+        
+        // Chart.js Global Configuration
+        if (typeof Chart !== 'undefined') {
+            Chart.defaults.font.family = 'Inter, sans-serif';
+            Chart.defaults.color = '#6B7280';
+            Chart.defaults.plugins.legend.labels.usePointStyle = true;
+            Chart.defaults.plugins.legend.labels.padding = 15;
+        } else {
+            console.error('Chart.js not loaded!');
+        }
+    
+    // Class Distribution Donut Chart
+    console.log('Initializing Class Distribution Chart...');
+    const classData = {{ class_counts | tojson }};
+    console.log('Class Data:', classData);
+    
+    // Check if we have data before creating chart
+    if (!classData || Object.keys(classData).length === 0) {
+        console.log('No class data - showing message');
+        document.getElementById('classChart').parentElement.innerHTML = 
+            '<div class="text-center text-muted py-5"><i class="bi bi-info-circle me-2"></i>No class data available yet</div>';
+    } else {
+        console.log('Creating donut chart with data:', classData);
+        const classCtx = document.getElementById('classChart').getContext('2d');
+        const classChart = new Chart(classCtx, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(classData),
+            datasets: [{
+                data: Object.values(classData),
+                backgroundColor: [
+                    colors.primary,
+                    colors.secondary,
+                    colors.warning
+                ],
+                borderWidth: 0,
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            aspectRatio: 1.5,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        font: {
+                            size: 13,
+                            weight: '500'
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#1F2937',
+                    padding: 12,
+                    titleFont: {
+                        size: 14,
+                        weight: '600'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    borderColor: '#E5E7EB',
+                    borderWidth: 1,
+                    cornerRadius: 8
+                }
+            },
+            cutout: '65%'
+        }
+    });
+    }
+    
+    // PR Performance Horizontal Bar Chart
+    console.log('Initializing PR Performance Chart...');
+    const prData = {{ pr_stats | tojson }};
+    console.log('PR Data:', prData);
+    const prNames = Object.keys(prData);
+    const prValues = Object.values(prData);
+    
+    // Check if we have PR data before creating chart
+    if (!prData || prNames.length === 0) {
+        console.log('No PR data - showing message');
+        document.getElementById('prChart').parentElement.innerHTML = 
+            '<div class="text-center text-muted py-5"><i class="bi bi-info-circle me-2"></i>No PR data available yet</div>';
+    } else {
+        console.log('Creating bar chart with data:', prData);
+        const prCtx = document.getElementById('prChart').getContext('2d');
+        const prChart = new Chart(prCtx, {
+        type: 'bar',
+        data: {
+            labels: prNames,
+            datasets: [{
+                label: 'Drives Handled',
+                data: prValues,
+                backgroundColor: colors.primary,
+                borderRadius: 6,
+                barThickness: 24
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            aspectRatio: 1.5,
+            indexAxis: 'y',
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: '#1F2937',
+                    padding: 12,
+                    titleFont: {
+                        size: 14,
+                        weight: '600'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    borderColor: '#E5E7EB',
+                    borderWidth: 1,
+                    cornerRadius: 8
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0,
+                        font: {
+                            size: 12
+                        }
+                    },
+                    grid: {
+                        color: '#F3F4F6',
+                        drawBorder: false
+                    }
+                },
+                y: {
+                    ticks: {
+                        font: {
+                            size: 11,
+                            weight: '500'
+                        }
+                    },
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+    }
+    
+    // Campus Type Pie Chart (On-Campus vs Off-Campus)
+    console.log('Initializing Campus Type Chart...');
+    const campusData = {{ campus_stats | tojson }};
+    console.log('Campus Data:', campusData);
+    
+    if (!campusData || Object.keys(campusData).length === 0) {
+        console.log('No campus data - showing message');
+        document.getElementById('campusChart').parentElement.innerHTML = 
+            '<div class="text-center text-muted py-5"><i class="bi bi-info-circle me-2"></i>No campus data available yet</div>';
+    } else {
+        console.log('Creating campus pie chart with data:', campusData);
+        const campusCtx = document.getElementById('campusChart').getContext('2d');
+        const campusChart = new Chart(campusCtx, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(campusData),
+                datasets: [{
+                    data: Object.values(campusData),
+                    backgroundColor: [
+                        colors.primary,
+                        colors.secondary
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: 1.5,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            font: {
+                                size: 13,
+                                weight: '500'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#1F2937',
+                        padding: 12,
+                        titleFont: {
+                            size: 14,
+                            weight: '600'
+                        },
+                        bodyFont: {
+                            size: 13
+                        },
+                        borderColor: '#E5E7EB',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += context.parsed + ' drives';
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Placement Origin Bar Chart (CPCG vs Department)
+    console.log('Initializing Placement Origin Chart...');
+    const originData = {{ origin_stats | tojson }};
+    console.log('Origin Data:', originData);
+    
+    if (!originData || Object.keys(originData).length === 0) {
+        console.log('No origin data - showing message');
+        document.getElementById('originChart').parentElement.innerHTML = 
+            '<div class="text-center text-muted py-5"><i class="bi bi-info-circle me-2"></i>No origin data available yet</div>';
+    } else {
+        console.log('Creating origin bar chart with data:', originData);
+        const originCtx = document.getElementById('originChart').getContext('2d');
+        const originChart = new Chart(originCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(originData),
+                datasets: [{
+                    label: 'Placement Drives',
+                    data: Object.values(originData),
+                    backgroundColor: colors.warning,
+                    borderRadius: 6,
+                    barThickness: 50
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: 1.5,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#1F2937',
+                        padding: 12,
+                        titleFont: {
+                            size: 14,
+                            weight: '600'
+                        },
+                        bodyFont: {
+                            size: 13
+                        },
+                        borderColor: '#E5E7EB',
+                        borderWidth: 1,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0,
+                            font: {
+                                size: 12
+                            }
+                        },
+                        grid: {
+                            color: '#F3F4F6',
+                            drawBorder: false
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: {
+                                size: 11,
+                                weight: '500'
+                            }
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    } catch (error) {
+        console.error('Dashboard initialization error:', error);
+        // Show error message to user
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger mt-3';
+            errorDiv.innerHTML = `
+                <strong>Error loading dashboard:</strong> ${error.message}<br>
+                <small>Please refresh the page or contact support if the issue persists.</small>
+            `;
+            mainContent.insertBefore(errorDiv, mainContent.firstChild);
+        }
+    }
+</script>
+{% endblock %}

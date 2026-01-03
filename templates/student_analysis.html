@@ -1,0 +1,456 @@
+{% extends "base.html" %}
+
+{% block title %}Student Analysis - PlacementHub{% endblock %}
+
+{% block content %}
+<!-- Top Navigation Bar -->
+<div class="top-nav">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Student Analysis</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title">Student Application Analysis</h1>
+    <p class="page-subtitle">Track complete application history and progression through company recruitment rounds</p>
+</div>
+
+<!-- Search Section -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card-custom" style="overflow: visible;">
+            <div class="card-body p-4" style="overflow: visible; position: relative;">
+                <h5 class="mb-3"><i class="bi bi-search me-2"></i>Search Student</h5>
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="position-relative" style="z-index: 1000;">
+                            <input type="text" 
+                                   class="form-control form-control-lg" 
+                                   id="studentSearchInput" 
+                                   placeholder="Type student name or register number to search... (e.g., AJIN GEORGE BINU or MCA2023001)"
+                                   autocomplete="off">
+                            <div class="position-absolute start-0 w-100 bg-white border rounded shadow-lg" 
+                                 id="searchResults" 
+                                 style="display: none; max-height: 300px; overflow-y: auto; z-index: 10000; top: 100%; margin-top: 2px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-primary btn-lg w-100" onclick="searchStudent()">
+                            <i class="bi bi-search me-2"></i>Search
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Student Analysis Results -->
+<div id="analysisResults" style="display: none;">
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(11, 114, 133, 0.1); color: var(--primary-accent);">
+                    <i class="bi bi-file-earmark-text"></i>
+                </div>
+                <div class="stat-value" id="statTotalApplications">0</div>
+                <div class="stat-label">Total Applications</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(22, 163, 74, 0.1); color: var(--success);">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-value" id="statSelected">0</div>
+                <div class="stat-label">Selected</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(220, 38, 38, 0.1); color: var(--error);">
+                    <i class="bi bi-x-circle"></i>
+                </div>
+                <div class="stat-value" id="statFailedFinal">0</div>
+                <div class="stat-label">Failed at Final Round</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">
+                    <i class="bi bi-graph-up"></i>
+                </div>
+                <div class="stat-value" id="statSelectionRate">0%</div>
+                <div class="stat-label">Selection Rate</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application History -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card-custom">
+                <div class="card-header" style="background: var(--surface); padding: 20px; border-bottom: 1px solid var(--border-color);">
+                    <h5 class="mb-0" style="font-weight: 600;">
+                        <i class="bi bi-clock-history me-2"></i>Application History
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div id="applicationHistoryTable"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Companies Not Applied -->
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="card-custom">
+                <div class="card-header" style="background: var(--surface); padding: 20px; border-bottom: 1px solid var(--border-color);">
+                    <h5 class="mb-0" style="font-weight: 600;">
+                        <i class="bi bi-x-circle me-2"></i>Companies Not Applied
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div id="notAppliedTable"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Indicator -->
+<div id="loadingIndicator" class="text-center py-5" style="display: none;">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-3 text-muted">Loading student analysis...</p>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let searchTimeout;
+    const searchInput = document.getElementById('studentSearchInput');
+    const searchResults = document.getElementById('searchResults');
+    const analysisResults = document.getElementById('analysisResults');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+
+    // Student search autocomplete
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        if (searchTimeout) clearTimeout(searchTimeout);
+        
+        if (query.length < 2) {
+            searchResults.style.display = 'none';
+            return;
+        }
+        
+        searchTimeout = setTimeout(() => {
+            fetch(`/api/search_students?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(students => {
+                    displaySearchResults(students);
+                })
+                .catch(error => console.error('Search error:', error));
+        }, 300);
+    });
+
+    function displaySearchResults(students) {
+        if (students.length === 0) {
+            searchResults.innerHTML = '<div class="p-3 text-muted">No students found</div>';
+            searchResults.style.display = 'block';
+            searchResults.style.zIndex = '9999';
+            return;
+        }
+        
+        searchResults.innerHTML = students.map(student => `
+            <div class="p-3 border-bottom cursor-pointer hover-bg" 
+                 onclick="selectStudent('${student.name.replace(/'/g, "\\'")}')"
+                 style="cursor: pointer; transition: background-color 0.2s;">
+                <strong>${student.name}</strong>
+                <div class="text-muted small">
+                    ${student.reg_no} | ${student.class} 
+                    ${student.is_placed ? '<span class="badge bg-success ms-2">Placed</span>' : ''}
+                </div>
+            </div>
+        `).join('');
+        searchResults.style.display = 'block';
+        searchResults.style.zIndex = '9999';
+    }
+
+    function selectStudent(name) {
+        searchInput.value = name;
+        searchResults.style.display = 'none';
+        searchStudent();
+    }
+
+    function searchStudent() {
+        const studentName = searchInput.value.trim();
+        if (!studentName) {
+            alert('Please enter a student name');
+            return;
+        }
+        
+        analysisResults.style.display = 'none';
+        loadingIndicator.style.display = 'block';
+        
+        fetch(`/api/student_analysis/${encodeURIComponent(studentName)}`)
+            .then(response => response.json())
+            .then(data => {
+                loadingIndicator.style.display = 'none';
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                displayAnalysis(data);
+            })
+            .catch(error => {
+                loadingIndicator.style.display = 'none';
+                console.error('Error:', error);
+                alert('Error loading student analysis');
+            });
+    }
+
+    function displayAnalysis(data) {
+        currentAnalysisData = data; // Store for modal use
+        
+        // Update statistics
+        document.getElementById('statTotalApplications').textContent = data.statistics.total_applications;
+        document.getElementById('statSelected').textContent = data.statistics.total_selected;
+        document.getElementById('statFailedFinal').textContent = data.statistics.failed_at_final;
+        document.getElementById('statSelectionRate').textContent = data.statistics.selection_rate + '%';
+        
+        // Display application history
+        const historyTable = document.getElementById('applicationHistoryTable');
+        if (data.application_history.length === 0) {
+            historyTable.innerHTML = '<div class="p-4 text-center text-muted">No applications found</div>';
+        } else {
+            let html = '<div class="table-responsive"><table class="table table-hover mb-0"><thead><tr>';
+            html += '<th>Company</th><th>Company ID</th><th>Stages Passed</th><th>Final Status</th><th>Progress</th><th>Details</th>';
+            html += '</tr></thead><tbody>';
+            
+            data.application_history.forEach(app => {
+                const progressPercent = app.total_stages > 0 ? (app.stages_passed / app.total_stages * 100) : 0;
+                const statusBadge = app.final_status === 'Selected' ? 'bg-success' : 
+                                   app.final_status.includes('Failed') ? 'bg-danger' : 
+                                   app.final_status.includes('Reached') ? 'bg-warning' : 'bg-secondary';
+                
+                html += `<tr>
+                    <td><strong>${app.company_name}</strong></td>
+                    <td><span class="badge bg-secondary">${app.company_id}</span></td>
+                    <td>${app.stages_passed}/${app.total_stages}</td>
+                    <td><span class="badge ${statusBadge}">${app.final_status}</span></td>
+                    <td>
+                        <div class="progress" style="width: 150px; height: 8px;">
+                            <div class="progress-bar ${statusBadge}" role="progressbar" 
+                                 style="width: ${progressPercent}%"></div>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="showCompanyDetails('${app.company_id}', '${app.company_name.replace(/'/g, "\\'")}')">
+                            <i class="bi bi-info-circle"></i> View
+                        </button>
+                    </td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table></div>';
+            historyTable.innerHTML = html;
+        }
+        
+        // Display companies not applied
+        const notAppliedTable = document.getElementById('notAppliedTable');
+        if (data.companies_not_applied.length === 0) {
+            notAppliedTable.innerHTML = '<div class="p-4 text-center text-success"><i class="bi bi-check-circle me-2"></i>Applied to all available companies!</div>';
+        } else {
+            let html = '<div class="p-4"><div class="row g-2">';
+            data.companies_not_applied.forEach(company => {
+                html += `<div class="col-md-3">
+                    <div class="card border">
+                        <div class="card-body p-2">
+                            <strong>${company.company_name}</strong>
+                            <div><small class="text-muted">${company.company_id}</small></div>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            html += '</div></div>';
+            notAppliedTable.innerHTML = html;
+        }
+        
+        analysisResults.style.display = 'block';
+    }
+
+    let currentAnalysisData = null;
+
+    function showCompanyDetails(companyId, companyName) {
+        if (!currentAnalysisData) return;
+        
+        const company = currentAnalysisData.application_history.find(app => app.company_id === companyId);
+        if (!company) return;
+        
+        // Create modal HTML
+        let modalHTML = `
+            <div class="modal fade" id="companyDetailsModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="bi bi-building me-2"></i>${companyName}
+                                <span class="badge bg-secondary ms-2">${companyId}</span>
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <strong>Final Status:</strong> 
+                                <span class="badge ${company.final_status === 'Selected' ? 'bg-success' : 
+                                               company.final_status.includes('Failed') ? 'bg-danger' : 
+                                               company.final_status.includes('Reached') ? 'bg-warning' : 'bg-secondary'}">
+                                    ${company.final_status}
+                                </span>
+                            </div>
+                            <div class="mb-3">
+                                <strong>Progress:</strong> ${company.stages_passed}/${company.total_stages} stages passed
+                                <div class="progress mt-2" style="height: 10px;">
+                                    <div class="progress-bar ${company.final_status === 'Selected' ? 'bg-success' : 
+                                                               company.final_status.includes('Failed') ? 'bg-danger' : 'bg-warning'}" 
+                                         role="progressbar" 
+                                         style="width: ${(company.stages_passed / company.total_stages * 100)}%">
+                                    </div>
+                                </div>
+                            </div>
+                            <hr>
+                            <h6 class="mb-3">Round-by-Round Progression:</h6>
+                            <div class="timeline">
+        `;
+        
+        company.progression.forEach((prog, idx) => {
+            const isPassed = prog.passed;
+            const icon = isPassed ? 'check-circle-fill text-success' : 'x-circle-fill text-danger';
+            const bgClass = isPassed ? 'bg-light border-success' : 'bg-light border-danger';
+            
+            modalHTML += `
+                <div class="d-flex mb-3 p-3 border rounded ${bgClass}">
+                    <div class="me-3">
+                        <i class="bi bi-${icon}" style="font-size: 1.5rem;"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">
+                            ${prog.stage}
+                            ${isPassed ? '<span class="badge bg-success ms-2">Passed</span>' : 
+                            idx > 0 && company.progression[idx-1].passed ? '<span class="badge bg-danger ms-2">Failed Here</span>' : 
+                            '<span class="badge bg-secondary ms-2">Not Cleared</span>'}
+                        </h6>
+                        <small class="text-muted">Round ${prog.index + 1} of ${company.total_stages}</small>
+                    </div>
+                </div>
+            `;
+        });
+        
+        modalHTML += `
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing modal if any
+        const existingModal = document.getElementById('companyDetailsModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Add modal to body
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('companyDetailsModal'));
+        modal.show();
+    }
+
+    // Hide search results when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.style.display = 'none';
+        }
+    });
+
+    // Allow Enter key to search
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchStudent();
+        }
+    });
+</script>
+
+<style>
+    .hover-bg:hover {
+        background-color: var(--hover-bg) !important;
+    }
+    .cursor-pointer {
+        cursor: pointer;
+    }
+    
+    #searchResults {
+        position: absolute !important;
+        z-index: 10000 !important;
+        background: white !important;
+        border: 1px solid #dee2e6 !important;
+        border-radius: 0.375rem !important;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        max-height: 300px !important;
+        overflow-y: auto !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+    }
+    
+    #searchResults > div {
+        transition: background-color 0.15s ease-in-out;
+    }
+    
+    #searchResults > div:hover {
+        background-color: #f8f9fa !important;
+    }
+    
+    .position-relative {
+        position: relative !important;
+    }
+    
+    /* Ensure parent containers don't clip the dropdown */
+    .card-custom {
+        overflow: visible !important;
+    }
+    
+    .card-body {
+        overflow: visible !important;
+    }
+    
+    /* Ensure the row and col don't clip */
+    .row {
+        overflow: visible !important;
+    }
+    
+    .col-md-8 {
+        overflow: visible !important;
+    }
+</style>
+{% endblock %}
+

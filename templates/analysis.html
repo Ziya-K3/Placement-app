@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis - PlacementHub{% endblock %}
+
+{% block content %}
+<!-- Top Navigation Bar -->
+<div class="top-nav">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Analysis</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title">Recruitment Analysis</h1>
+    <p class="page-subtitle">Student progress tracking across companies from Analysis - Overall.csv</p>
+</div>
+
+{% if match_results %}
+<!-- Matching Statistics -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(11, 114, 133, 0.1); color: var(--primary-accent);">
+                <i class="bi bi-check-circle"></i>
+            </div>
+            <div class="stat-value">{{ match_results.stats.matched_count }}</div>
+            <div class="stat-label">Matched Names</div>
+            <div class="stat-change positive">
+                <i class="bi bi-arrow-up"></i> {{ match_results.stats.match_percentage }}% Match Rate
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(220, 38, 38, 0.1); color: var(--error);">
+                <i class="bi bi-x-circle"></i>
+            </div>
+            <div class="stat-value">{{ match_results.stats.not_matched_count }}</div>
+            <div class="stat-label">Not Matched</div>
+            <div class="stat-change negative">
+                <i class="bi bi-exclamation-triangle"></i> Needs Review
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">
+                <i class="bi bi-file-earmark-text"></i>
+            </div>
+            <div class="stat-value">{{ match_results.stats.total_in_analysis }}</div>
+            <div class="stat-label">In Analysis CSV</div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(22, 163, 74, 0.1); color: var(--success);">
+                <i class="bi bi-people"></i>
+            </div>
+            <div class="stat-value">{{ match_results.stats.total_in_full_list }}</div>
+            <div class="stat-label">In Full Name List</div>
+        </div>
+    </div>
+</div>
+
+<!-- Company Statistics -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card-custom">
+            <div class="card-header" style="background: var(--surface); padding: 20px; border-bottom: 1px solid var(--border-color);">
+                <h5 class="mb-0" style="font-weight: 600;"><i class="bi bi-building me-2"></i>Company Statistics</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Company Name</th>
+                                <th>Rounds</th>
+                                <th>Applied</th>
+                                <th>Selected</th>
+                                <th>Conversion Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for company in companies_info %}
+                            <tr>
+                                <td><strong>{{ company.name }}</strong></td>
+                                <td><span class="badge bg-secondary">{{ company.rounds }}</span></td>
+                                <td>{{ company.applied }}</td>
+                                <td>
+                                    <span class="badge bg-success">{{ company.selected }}</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="progress" style="width: 100px; height: 8px;">
+                                            <div class="progress-bar bg-success" role="progressbar" 
+                                                 style="width: {{ company.conversion_rate }}%"
+                                                 aria-valuenow="{{ company.conversion_rate }}" 
+                                                 aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <span style="font-size: 13px; font-weight: 500;">{{ company.conversion_rate }}%</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Matching Details Tabs -->
+<div class="row g-4">
+    <div class="col-12">
+        <div class="card-custom">
+            <div class="card-header" style="background: var(--surface); padding: 20px; border-bottom: 1px solid var(--border-color);">
+                <ul class="nav nav-tabs card-header-tabs" id="matchTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="matched-tab" data-bs-toggle="tab" data-bs-target="#matched" type="button" role="tab">
+                            <i class="bi bi-check-circle me-2"></i>Matched ({{ match_results.stats.matched_count }})
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="not-matched-tab" data-bs-toggle="tab" data-bs-target="#not-matched" type="button" role="tab">
+                            <i class="bi bi-x-circle me-2"></i>Not Matched ({{ match_results.stats.not_matched_count }})
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="only-full-list-tab" data-bs-toggle="tab" data-bs-target="#only-full-list" type="button" role="tab">
+                            <i class="bi bi-file-earmark-text me-2"></i>Only in Full List ({{ match_results.stats.only_in_full_list_count }})
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body p-0">
+                <div class="tab-content" id="matchTabsContent">
+                    <!-- Matched Tab -->
+                    <div class="tab-pane fade show active" id="matched" role="tabpanel" style="padding: 20px;">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Analysis Name</th>
+                                        <th>Full List Name</th>
+                                        <th>Reg No (Analysis)</th>
+                                        <th>Reg No (Full List)</th>
+                                        <th>Class</th>
+                                        <th>Match Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for match in match_results.matched %}
+                                    <tr>
+                                        <td><strong>{{ match.analysis_name }}</strong></td>
+                                        <td>{{ match.full_list_name }}</td>
+                                        <td>{{ match.reg_no_analysis if match.reg_no_analysis else '-' }}</td>
+                                        <td>{{ match.reg_no_full_list }}</td>
+                                        <td><span class="badge bg-info">{{ match.class }}</span></td>
+                                        <td>
+                                            {% if match.match_type == 'exact' %}
+                                                <span class="badge bg-success">Exact</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Fuzzy</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Not Matched Tab -->
+                    <div class="tab-pane fade" id="not-matched" role="tabpanel" style="padding: 20px;">
+                        <div class="alert alert-warning mb-3">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            These students are in Analysis - Overall.csv but not found in FULL NAME LIST.csv
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name (Analysis)</th>
+                                        <th>Register Number</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for not_match in match_results.not_matched %}
+                                    <tr>
+                                        <td><strong>{{ not_match.analysis_name }}</strong></td>
+                                        <td>{{ not_match.reg_no_analysis if not_match.reg_no_analysis else '-' }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Only in Full List Tab -->
+                    <div class="tab-pane fade" id="only-full-list" role="tabpanel" style="padding: 20px;">
+                        <div class="alert alert-info mb-3">
+                            <i class="bi bi-info-circle me-2"></i>
+                            These students are in FULL NAME LIST.csv but not found in Analysis - Overall.csv
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Register Number</th>
+                                        <th>Class</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for student in match_results.only_in_full_list %}
+                                    <tr>
+                                        <td><strong>{{ student.name }}</strong></td>
+                                        <td>{{ student.reg_no }}</td>
+                                        <td><span class="badge bg-info">{{ student.class }}</span></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle me-2"></i>
+    Error loading analysis data. Please check the CSV file.
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize tooltips if needed
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+</script>
+{% endblock %}
+

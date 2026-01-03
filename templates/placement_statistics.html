@@ -1,0 +1,585 @@
+{% extends "base.html" %}
+
+{% block title %}Placement Statistics - PlacementHub{% endblock %}
+
+{% block content %}
+<!-- Top Navigation Bar -->
+<div class="top-nav">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Placement Statistics</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title">Placement Statistics & Analysis</h1>
+    <p class="page-subtitle">Comprehensive analysis combining round-wise progression and placement data</p>
+</div>
+
+<!-- Loading Indicator -->
+<div id="loadingIndicator" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-3 text-muted">Loading placement statistics...</p>
+</div>
+
+<!-- Statistics Content -->
+<div id="statisticsContent" style="display: none;">
+    <!-- Overall Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-4 col-md-6">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(11, 114, 133, 0.1); color: var(--primary-accent);">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="stat-value" id="totalStudents">0</div>
+                <div class="stat-label">Total Students</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                    <i class="bi bi-file-earmark-text"></i>
+                </div>
+                <div class="stat-value" id="totalApplied">0</div>
+                <div class="stat-label">Students Applied</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(22, 163, 74, 0.1); color: var(--success);">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-value" id="totalPlaced">0</div>
+                <div class="stat-label">Students Placed</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Stats Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-4 col-md-6">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">
+                    <i class="bi bi-graph-up"></i>
+                </div>
+                <div class="stat-value" id="applicationRate">0%</div>
+                <div class="stat-label">Application Rate</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(236, 72, 153, 0.1); color: #ec4899;">
+                    <i class="bi bi-arrow-up-right-circle"></i>
+                </div>
+                <div class="stat-value" id="selectionRate">0%</div>
+                <div class="stat-label">Selection Rate</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(14, 165, 233, 0.1); color: #0ea5e9;">
+                    <i class="bi bi-calculator"></i>
+                </div>
+                <div class="stat-value" id="avgApplications">0</div>
+                <div class="stat-label">Avg Applications/Student</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Funnel Visualization -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card-custom">
+                <div class="card-header" style="background: var(--surface); padding: 20px; border-bottom: 1px solid var(--border-color);">
+                    <h5 class="mb-0" style="font-weight: 600;">
+                        <i class="bi bi-funnel me-2"></i>Recruitment Funnel Analysis
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="funnelChart" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Round Pass Rates -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card-custom">
+                <div class="card-header" style="background: var(--surface); padding: 20px; border-bottom: 1px solid var(--border-color);">
+                    <h5 class="mb-0" style="font-weight: 600;">
+                        <i class="bi bi-bar-chart me-2"></i>Round-wise Pass Rates
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="roundPassRateChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Class-wise Statistics -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card-custom">
+                <div class="card-header" style="background: var(--surface); padding: 20px; border-bottom: 1px solid var(--border-color);">
+                    <h5 class="mb-0" style="font-weight: 600;">
+                        <i class="bi bi-people-fill me-2"></i>Class-wise Statistics
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="classStatsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Activity Statistics -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-4 col-md-6">
+            <div class="card-custom">
+                <div class="card-header" style="background: var(--surface); padding: 20px; border-bottom: 1px solid var(--border-color);">
+                    <h5 class="mb-0" style="font-weight: 600;">
+                        <i class="bi bi-star-fill me-2"></i>Most Active Applicants
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead style="position: sticky; top: 0; background: white; z-index: 10;">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Class</th>
+                                    <th>Applications</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mostActiveTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6">
+            <div class="card-custom">
+                <div class="card-header" style="background: var(--surface); padding: 20px; border-bottom: 1px solid var(--border-color);">
+                    <h5 class="mb-0" style="font-weight: 600;">
+                        <i class="bi bi-exclamation-circle me-2"></i>Least Active Applicants
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead style="position: sticky; top: 0; background: white; z-index: 10;">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Class</th>
+                                    <th>Applications</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leastActiveTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6">
+            <div class="card-custom">
+                <div class="card-header" style="background: var(--surface); padding: 20px; border-bottom: 1px solid var(--border-color);">
+                    <h5 class="mb-0" style="font-weight: 600;">
+                        <i class="bi bi-x-circle me-2"></i>Never Applied
+                        <span class="badge bg-danger ms-2" id="neverAppliedCount">0</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead style="position: sticky; top: 0; background: white; z-index: 10;">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Reg No</th>
+                                    <th>Class</th>
+                                </tr>
+                            </thead>
+                            <tbody id="neverAppliedTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Company-wise Statistics -->
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="card-custom">
+                <div class="card-header" style="background: var(--surface); padding: 20px; border-bottom: 1px solid var(--border-color);">
+                    <h5 class="mb-0" style="font-weight: 600;">
+                        <i class="bi bi-building me-2"></i>Company-wise Statistics
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Company</th>
+                                    <th>Company ID</th>
+                                    <th>Unique Students Applied</th>
+                                    <th>Total Placed</th>
+                                    <th>Placed Students</th>
+                                </tr>
+                            </thead>
+                            <tbody id="companyStatsTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    let funnelChart = null;
+    let roundPassRateChart = null;
+    let classStatsChart = null;
+
+    // Load statistics on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadStatistics();
+    });
+
+    function loadStatistics() {
+        fetch('/api/placement_statistics')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loadingIndicator').style.display = 'none';
+                document.getElementById('statisticsContent').style.display = 'block';
+                
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+                
+                displayStatistics(data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('loadingIndicator').style.display = 'none';
+                alert('Error loading placement statistics');
+            });
+    }
+
+    function displayStatistics(data) {
+        // Update overall statistics
+        document.getElementById('totalStudents').textContent = data.overall.total_students;
+        document.getElementById('totalApplied').textContent = data.overall.total_applied;
+        document.getElementById('totalPlaced').textContent = data.overall.total_placed;
+        document.getElementById('applicationRate').textContent = data.overall.application_rate + '%';
+        document.getElementById('selectionRate').textContent = data.overall.selection_rate + '%';
+        document.getElementById('avgApplications').textContent = data.overall.avg_applications_per_student;
+        
+        // Create funnel chart
+        createFunnelChart(data.funnel);
+        
+        // Create round pass rate chart
+        createRoundPassRateChart(data.round_pass_rates);
+        
+        // Create class stats chart
+        createClassStatsChart(data.class_stats);
+        
+        // Display company stats table
+        displayCompanyStats(data.company_stats);
+        
+        // Display student activity
+        displayStudentActivity(data.student_activity);
+    }
+    
+    function displayStudentActivity(activity) {
+        // Most active students
+        const mostActiveTable = document.getElementById('mostActiveTable');
+        if (activity.most_active_students.length === 0) {
+            mostActiveTable.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No data</td></tr>';
+        } else {
+            mostActiveTable.innerHTML = activity.most_active_students.map(student => `
+                <tr>
+                    <td><strong>${student.name}</strong></td>
+                    <td>${student.class}</td>
+                    <td><span class="badge bg-primary">${student.applications}</span></td>
+                </tr>
+            `).join('');
+        }
+        
+        // Least active students
+        const leastActiveTable = document.getElementById('leastActiveTable');
+        if (activity.least_active_students.length === 0) {
+            leastActiveTable.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No data</td></tr>';
+        } else {
+            leastActiveTable.innerHTML = activity.least_active_students.map(student => `
+                <tr>
+                    <td><strong>${student.name}</strong></td>
+                    <td>${student.class}</td>
+                    <td><span class="badge bg-warning">${student.applications}</span></td>
+                </tr>
+            `).join('');
+        }
+        
+        // Never applied students
+        document.getElementById('neverAppliedCount').textContent = activity.total_never_applied;
+        const neverAppliedTable = document.getElementById('neverAppliedTable');
+        if (activity.never_applied_students.length === 0) {
+            neverAppliedTable.innerHTML = '<tr><td colspan="3" class="text-center text-success"><i class="bi bi-check-circle me-2"></i>All students have applied!</td></tr>';
+        } else {
+            neverAppliedTable.innerHTML = activity.never_applied_students.map(student => `
+                <tr>
+                    <td><strong>${student.name}</strong></td>
+                    <td>${student.reg_no}</td>
+                    <td>${student.class}</td>
+                </tr>
+            `).join('');
+        }
+    }
+
+    function createFunnelChart(funnelData) {
+        const ctx = document.getElementById('funnelChart').getContext('2d');
+        
+        if (funnelChart) {
+            funnelChart.destroy();
+        }
+        
+        const labels = funnelData.map(d => d.stage);
+        // Funnel shows: how many students reached each stage (progression)
+        const reachedData = funnelData.map(d => d.reached);
+        const passedData = funnelData.map(d => d.passed);
+        
+        funnelChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Reached Stage',
+                        data: reachedData,
+                        backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Passed Stage',
+                        data: passedData,
+                        backgroundColor: 'rgba(22, 163, 74, 0.6)',
+                        borderColor: 'rgba(22, 163, 74, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: function(context) {
+                                const index = context.dataIndex;
+                                const passRate = funnelData[index].pass_rate;
+                                return `Pass Rate: ${passRate}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function createRoundPassRateChart(roundData) {
+        const ctx = document.getElementById('roundPassRateChart').getContext('2d');
+        
+        if (roundPassRateChart) {
+            roundPassRateChart.destroy();
+        }
+        
+        const labels = roundData.map(d => d.round);
+        const passRates = roundData.map(d => d.pass_rate);
+        
+        roundPassRateChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Pass Rate (%)',
+                    data: passRates,
+                    backgroundColor: roundData.map((d, i) => {
+                        const colors = [
+                            'rgba(59, 130, 246, 0.6)',
+                            'rgba(16, 185, 129, 0.6)',
+                            'rgba(245, 158, 11, 0.6)',
+                            'rgba(236, 72, 153, 0.6)',
+                            'rgba(139, 92, 246, 0.6)',
+                            'rgba(14, 165, 233, 0.6)'
+                        ];
+                        return colors[i % colors.length];
+                    }),
+                    borderColor: roundData.map((d, i) => {
+                        const colors = [
+                            'rgba(59, 130, 246, 1)',
+                            'rgba(16, 185, 129, 1)',
+                            'rgba(245, 158, 11, 1)',
+                            'rgba(236, 72, 153, 1)',
+                            'rgba(139, 92, 246, 1)',
+                            'rgba(14, 165, 233, 1)'
+                        ];
+                        return colors[i % colors.length];
+                    }),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: function(context) {
+                                const index = context.dataIndex;
+                                const round = roundData[index];
+                                return `Passed: ${round.passed} / ${round.total}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function createClassStatsChart(classStats) {
+        const ctx = document.getElementById('classStatsChart').getContext('2d');
+        
+        if (classStatsChart) {
+            classStatsChart.destroy();
+        }
+        
+        const classes = ['MCA A', 'MCA B', 'MSc AIML'];
+        const appliedData = classes.map(c => classStats[c].applied);
+        const placedData = classes.map(c => classStats[c].placed);
+        
+        classStatsChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: classes,
+                datasets: [
+                    {
+                        label: 'Applied',
+                        data: appliedData,
+                        backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Placed',
+                        data: placedData,
+                        backgroundColor: 'rgba(22, 163, 74, 0.6)',
+                        borderColor: 'rgba(22, 163, 74, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: function(context) {
+                                return '';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function displayCompanyStats(companyStats) {
+        const tableBody = document.getElementById('companyStatsTable');
+        
+        if (companyStats.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No company data available</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        companyStats.forEach(company => {
+            const placedStudentsList = company.placed_students.map(s => 
+                `${s.name} (${s.role || 'N/A'})`
+            ).join(', ') || 'None';
+            
+            html += `<tr>
+                <td><strong>${company.company_name}</strong></td>
+                <td><span class="badge bg-secondary">${company.company_id}</span></td>
+                <td>${company.total_applied}</td>
+                <td><span class="badge bg-success">${company.total_placed}</span></td>
+                <td><small>${placedStudentsList}</small></td>
+            </tr>`;
+        });
+        
+        tableBody.innerHTML = html;
+    }
+</script>
+{% endblock %}
+
